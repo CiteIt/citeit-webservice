@@ -1,8 +1,13 @@
-# CiteIt Quote-Context Web Service
+# CiteIt Web Service
 
 The CiteIt Quote-Context Web Service allows web authors
 to demonstrate the context of their quotations by helping them display the
 500 characters of context before and after the quote they are citing.
+
+## View Demo: ##
+Demo site with video
+  * https://www.neotext.net/demo/
+
 
 ## How CiteIt Works:
 
@@ -31,12 +36,15 @@ a reader clicks on an arrow above or below the quotation.
 
 ## Inspiration:
 I got this idea while I was writing an article about hypertext pioneer
-Ted Nelson
+[Ted Nelson](https://en.wikipedia.org/wiki/Ted_Nelson)
 
   * https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html
 
-I know CiteIt is not Ted's full vision.  I don't have the technical ability
-to implement it; but I hope we can get closer, as more people come
+I know CiteIt still follows the [Worse is Better](https://en.wikipedia.org/wiki/Worse_is_better) 
+approach of the web, but I don't have the technical ability to 
+implement Ted's full vision.
+
+I hope we can get closer, as more people come
 to understand what Ted originally proposed.
 
 
