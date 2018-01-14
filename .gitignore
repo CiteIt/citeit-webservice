@@ -1,0 +1,13 @@
+venv/
+
+.idea/CiteIt.iml
+
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/vcs.xml
+
+.idea/workspace.xml
+
+*.pyc
