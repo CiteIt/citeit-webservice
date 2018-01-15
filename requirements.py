@@ -6,6 +6,7 @@ chardet==3.0.4
 click==6.7
 cryptography==2.1.4
 Flask==0.12.2
+Flask-SQLAlchemy==2.3.2
 ftfy==5.2.0
 idna==2.6
 itsdangerous==0.24
@@ -15,6 +16,7 @@ pycparser==2.18
 pyOpenSSL==17.5.0
 requests==2.18.4
 six==1.11.0
+SQLAlchemy==1.2.0
 urllib3==1.22
 wcwidth==0.1.7
 Werkzeug==0.13
