@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import request
+from flask import jsonify
 from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL    # lookup quotes
@@ -46,12 +47,12 @@ def post_url():
             print(n, ": saving citation.")
             c = Citation(citation)
             c.save()
-            print(c.data['sha256'], ' ', c.data['citing_quote'])
             saved_citations[c.data['sha256']] = c.data['citing_quote']
+            print(c.data['sha256'], ' ', c.data['citing_quote'])
     else:
-        print("Error: Not a valid url")
+        saved_citations['error'] = "Not a valid url: " + url_string
 
-    return ""
+    return jsonify(saved_citations)
 
 
 if __name__ == '__main__':
