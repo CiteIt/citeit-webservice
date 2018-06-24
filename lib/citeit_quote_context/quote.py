@@ -9,6 +9,7 @@
 
 from lib.citeit_quote_context.quote_context import QuoteContext
 from lib.citeit_quote_context.document import Document
+from lib.citeit_quote_context.text_convert import TextConvert
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from bs4 import BeautifulSoup
 from functools import lru_cache
@@ -43,11 +44,11 @@ class Quote:
 
     def __init__(
         self,
-        citing_quote,       # excerpt from citing document
-        citing_url,         # url of the document that is doing the quoting
-        cited_url,          # url of document that is being quoted
-        citing_text='',     # optional: text from citing document
-        citing_raw='',      # optional: raw content of citing document
+        citing_quote_input,       # excerpt from citing document
+        citing_url_input,         # url of the document that is doing the quoting
+        cited_url_input,          # url of document that is being quoted
+        citing_text_input='',     # optional: text from citing document
+        citing_raw_input='',      # optional: raw content of citing document
         text_output=True,   # output computed text version of url's html
         raw_output=True,    # output full html/pdf source of cited url
         prior_quote_context_length=500, # length of excerpt before quote
@@ -55,11 +56,11 @@ class Quote:
         starting_location_guess=None    # guess used by google diff_match_patch
     ):
         self.start_time = time.time()   # measure elapsed time
-        self.citing_quote = citing_quote
-        self.citing_url = citing_url
-        self.cited_url = cited_url
-        self.citing_text = citing_text
-        self.citing_raw = citing_raw
+        self.citing_quote_input = citing_quote_input
+        self.citing_url_input = citing_url_input
+        self.cited_url_input = cited_url_input
+        self.citing_text_input = citing_text_input
+        self.citing_raw_input = citing_raw_input
         self.text_output = text_output
         self.raw_output = raw_output
         self.prior_quote_context_length = prior_quote_context_length
@@ -67,8 +68,12 @@ class Quote:
         self.starting_location_guess = starting_location_guess
 
     ######################## Citing Document ############################
+
+    def citing_quote(self):
+        return self.citing_quote_input
+
     def citing_url(self):
-        return self.citing_url
+        return self.citing_url_input
 
     @lru_cache(maxsize=20)
     def citing_doc(self):
@@ -77,7 +82,7 @@ class Quote:
 
     def citing_raw(self):
         """ Get text-version of citing document """
-        citing_raw = self.citing_raw
+        citing_raw = self.citing_raw_input
         if not citing_raw:
             if self.citing_doc():
                 citing_raw = citing_doc.raw()
@@ -88,35 +93,39 @@ class Quote:
             If citing text was passed in to function, use it
             Otherwise look it up using Document class
         """
-        citing_text = self.citing_text
+        citing_text = self.citing_text_input
         if not citing_text:
             if self.citing_doc():
-                citing_text = citing_doc().text()
+                citing_text = self.citing_doc().text()
         return citing_text
 
-    def citing_citeit_url(self):
+
+    def citing_url_canonical(self):
         """ Check citing page's html (raw) for a canonical url,
             if none found, return the specified url
         """
-        html = self.citing_raw
-        url = self.citing_url
+        html = self.citing_raw_input
+        url = self.citing_url()
+
         citing = Canonical_URL(html, url)
         return citing.citeit_url()
+        #return self.citing_url()
+
 
     ########################## Cited Document ##########################
     def cited_url(self):
-        return self.cited_url
+        return self.cited_url_input
 
     @lru_cache(maxsize=20)
     def cited_doc(self):
         """ Get Document of cited url """
-        return Document(self.cited_url)
+        return Document(self.cited_url())
 
     def cited_raw(self):
         """ Get text-version of citing document """
         cited_raw = ''
         if self.cited_doc():
-            cited_raw = cited_doc().raw()
+            cited_raw = self.cited_doc().raw()
         return cited_raw
 
     def cited_text(self):
@@ -129,37 +138,38 @@ class Quote:
             cited_text = self.cited_doc().text()
         return cited_text
 
-    def cited_citeit_url(self):
+    def cited_url_canonical(self):
         """ Check cited page's html (raw) for a canonical url,
             if none found, return the specified url
         """
         html = self.cited_raw()
-        url = self.cited_url()
+        url = self.cited_url()  ######### Cited ##########
         cited = Canonical_URL(html, url)
         return cited.citeit_url()
 
     def hashkey(self):
         """ The hash is based on a concatination of:
-            citing_quote|citing_citeit_url|cited_url
+            citing_quote|citing_url_canonical|cited_url
 
             I would like to use the canonical cited_url, but doing so would
             require the authoring software to correct authors when they
             supply a non-canonical url.
 
             Certain characters (and all spaces) in the citing_quote are removed
-            to descrease the liklihood that character irregularites
+            to decrease the likelihood that character irregularites
             throw off the hash
         """
 
-        soup = BeautifulSoup(self.citing_quote, "html.parser")
-        citing_quote = soup.get_text()
-        replace_text = ['\n', '’', ',', '.' , '-', ':', '/', '!', ' ']
-        for txt in replace_text:
-            citing_quote = citing_quote.replace(txt, '')
+        # soup = BeautifulSoup(self.citing_quote, "html.parser")
+        # citing_quote = soup.get_text()
+
+        citing_quote = self.citing_quote()
+        citing_quote = TextConvert(citing_quote).escape()
+
         return ''.join([
                     citing_quote, '|',
-                    self.citing_citeit_url(), '|',
-                    self.cited_url # future: replace with: self.cited_citeit_url
+                    self.citing_url_canonical(), '|',
+                    self.cited_url() # future: replace with: self.cited_url_canonical ?
                 ])
 
     def hash(self):
@@ -168,6 +178,8 @@ class Quote:
         """
         hash_method = getattr(hashlib, HASH_ALGORITHM)
         hash_text = self.hashkey()
+        #print('>> Hashkey: ' + hash_text)
+        #print(' ')
         return hash_method(hash_text.encode('utf-8')).hexdigest()
 
     def error(self):
@@ -190,21 +202,29 @@ class Quote:
 
         data_dict = {
             'sha256': self.hash(),
-            'citing_url': self.citing_url,  #  may be different from canonical
-            'cited_url': self.cited_url,    #  may be different from canonical
+            'citing_quote': self.citing_quote(),
+            'citing_url': self.citing_url(),  #  may be different from canonical
+            'cited_url': self.cited_url(),    #  may be different from canonical
+            'citing_url_canonical': self.citing_url_canonical(),
+            'cited_url_canonical': self.cited_url_canonical(),
         }
 
+        ######### LEFT OFF ##########
+
+
+
+
         # Set text and raw values equal to user-supplied values, or look up
-        data_dict['citing_text'] = self.citing_text
-        data_dict['cited_text'] = self.cited_text
+        data_dict['citing_text'] = self.citing_text()
+        data_dict['cited_text'] = self.cited_text()
 
         if self.raw_output and self.citing_doc():
-            data_dict['citing_raw'] = self.citing_raw
-            data_dict['cited_raw'] = self.cited_raw
+            data_dict['citing_raw'] = self.citing_raw_input
+            data_dict['cited_raw'] = self.cited_raw()
 
         # Find context of quote from within text
-        citing_context = QuoteContext(self.citing_quote, self.citing_text)
-        cited_context = QuoteContext(self.citing_quote, self.cited_text())
+        citing_context = QuoteContext(self.citing_quote(), self.citing_text())
+        cited_context = QuoteContext(self.citing_quote(), self.cited_text())
 
         # Populate context fields with Document methods
         quote_context_fields = [
@@ -247,4 +267,7 @@ class Quote:
             for excluded_field in excluded_fields:
                 data_dict.pop(excluded_field, None)
 
+        """  ##### LEFT OFF #####
+        """
         return data_dict
+

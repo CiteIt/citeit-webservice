@@ -76,12 +76,6 @@ class Document:
                 text = "document: HTTPError"
                 return text
 
-            except requests.SSLError:
-                self.request_stop = datetime.now()
-
-                """ TODO: Add better error tracking """
-                text = "document: SSLError"
-                return text
 
         else: # Don't convert to unicode
             try:
@@ -218,7 +212,7 @@ class Document:
 
     def hexkey(self):
         """ URL shortner: return MD5 hash of citing url """
-        url = self.citing_citeit_url.encode('utf-8')
+        url = self.citing_url_canonical.encode('utf-8')
         key = base64.urlsafe_b64encode(hashlib.md5(url).digest())[:16]
         return key.decode('utf-8')
 

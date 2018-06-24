@@ -38,14 +38,17 @@ class QuoteContext:
     ):
         self.quote = normalize_text(quote)
         self.text = normalize_text(text)
-        self.text_output = normalize_text(text_output)
+        self.text_output = text_output
         self.prior_quote_context_length = prior_quote_context_length
         self.after_quote_context_length = after_quote_context_length
         self.starting_location_guess = starting_location_guess
 
     def quote_length(self):
         """ length of specified quote """
-        return len(self.quote)
+        if self.quote:
+            return len(self.quote)
+        else:
+            return 0
 
     def text_length(self):
         """ length of specified text """
@@ -65,9 +68,10 @@ class QuoteContext:
 
     def quote_start_position(self):
         """ Lookup quote starting position using
-            google diff_match_patch (levenshtein) algorithm
+            google diff_match_patch (Levenshtein) algorithm:
+            https://en.wikipedia.org/wiki/Levenshtein_distance
         """
-        quote_locate = diff_match_patch()   # levenshtein library, from google
+        quote_locate = diff_match_patch()   # Levenshtein library, from google
         quote_locate.Diff_Timeout = 5.0 	# Tweak this?
         quote_locate.Match_Threshold = 0.5  # Tweak this?
 
@@ -89,8 +93,8 @@ class QuoteContext:
             Compute contextual data:
                 quote,
                 quote_length,
-                start_postion,
-                end_postion,
+                start_position,
+                end_position,
                 context_before,
                 context_after,
                 context_start_position,
@@ -115,7 +119,7 @@ class QuoteContext:
             data['text'] = self.text
             return data
 
-        else:  # Calculate quote starting postion and context
+        else:  # Calculate quote starting position and context
             quote_end_position = quote_start_position + self.quote_length()
 
             # Calculate starting position of prior and subsequent sections
@@ -137,7 +141,7 @@ class QuoteContext:
                 context_end_position = context_end_position + \
                     self.after_quote_context_length
 
-                # Get text that immediately preceeds and follows
+                # Get text that immediately precedes and follows
                 text = self.text
                 context_before = text[
                     context_start_position: quote_start_position
@@ -172,7 +176,7 @@ def normalize_text(text):
         type of quotation mark as the text it cites.
         I welcome attempts to improve this process.
 
-        Standardize text so that curly apostrophes and
+        This code standardizes text so that curly apostrophes and
         normal apostrophes have the same representation and
         html entities match their representations
     """

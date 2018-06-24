@@ -55,7 +55,7 @@ class URL:
         """ Return raw data of requested document """
         return self.doc().raw()
 
-    @lru_cache(maxsize=50)
+    # @lru_cache(maxsize=50)
     def text(self):
         """ Return text version of requested document """
         return self.doc().text()
@@ -112,7 +112,7 @@ class URL:
 
     def citations(self):
         """ Return a list of Quote Lookup results for all citations on this page
-            Uses asycnronous pool to achieve parallel processing
+            Uses asychronous pool to achieve parallel processing
             calls load_quote_data() function
             for all values in self.citations_list_dict
             using python 'map' function
@@ -120,11 +120,11 @@ class URL:
         result_list = []
         citations_list_dict = self.citations_list_dict()
         pool = Pool(processes=NUM_DOWNLOAD_PROCESSES)
-        try:
-            result_list = pool.map(load_quote_data, citations_list_dict)
-        except ValueError:
-            # TODO: add better error handling
-            print("Skipping map value ..")
+        #try:
+        result_list = pool.map(load_quote_data, citations_list_dict)
+        #except ValueError:
+        #    # TODO: add better error handling
+        #    print("Skipping map value ..")
         pool.close()
         pool.join()
         return result_list
@@ -135,43 +135,14 @@ class URL:
 
 def load_quote_data(quote_keys):
     """ lookup quote data, from keys """
-    print("Downloading citation for: " + quote_keys['cited_url'])
+    print("Downloading citation for: " + quote_keys['citing_quote'])
+
     quote = Quote(
                  quote_keys['citing_quote'],
                  quote_keys['citing_url'],
                  quote_keys['cited_url'],
                  quote_keys['citing_text'],  # optional: caching
-                 quote_keys['citing_raw'],   # optional: caching
+                 quote_keys['citing_raw']   # optional: caching
              )
     return quote.data()
 
-
-"""
-This 'Save' action should be moved to a separate class
-so that it is not tied as closely to the main classes.
-
-def publish_citations(self):
-
-    print("Publishing citations ..")
-    if not self.citations():
-        return
-    for quote_dict in self.citations():
-        if quote_dict:
-            #sha1 = quote_dict['sha1']
-            sha256 = quote_dict['sha256']
-            quote_dict_defaults = quote_dict
-            quote_dict_defaults.pop('sha256')  # remove sha1 key
-
-            q, created = QuoteModel.objects.update_or_create(
-                sha256=sha256,
-                defaults=quote_dict_defaults
-            )
-            try:
-                if q:
-                    q.publish_json()
-                else:
-                    print("Unable to publish: " + quote_dict['cited_url'])
-            except ValueError:
-                print("Error publishing: " + quote_dict['cited_url'])
-            print("Published: " + quote_dict['cited_url'])
-"""

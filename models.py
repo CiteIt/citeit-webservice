@@ -35,7 +35,7 @@ class Quote(Base):
     id = Column(Integer(), primary_key=True)
     sha256 = Column(String(64), nullable=False, unique=True)
     citing_url = Column(String(2000), nullable=False)
-    citing_citeit_url = Column(String(2000), nullable=False)
+    citing_url_canonical = Column(String(2000), nullable=False)
     citing_quote = Column(UnicodeText(), nullable=False)
     citing_quote_length = Column(Integer(), nullable=True)
     citing_quote_start_position = Column(Integer(), nullable=True)
