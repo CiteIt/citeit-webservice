@@ -11,7 +11,9 @@ from lib.citeit_quote_context.quote_context import QuoteContext
 from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.text_convert import TextConvert
 from lib.citeit_quote_context.canonical_url import Canonical_URL
-from bs4 import BeautifulSoup
+from lib.citeit_quote_context.canonical_url import url_without_protocol
+from lib.citeit_quote_context.text_convert import html_to_text
+
 from functools import lru_cache
 import hashlib
 import time
@@ -70,7 +72,7 @@ class Quote:
     ######################## Citing Document ############################
 
     def citing_quote(self):
-        return self.citing_quote_input
+        return html_to_text(self.citing_quote_input)
 
     def citing_url(self):
         return self.citing_url_input
@@ -78,14 +80,17 @@ class Quote:
     @lru_cache(maxsize=20)
     def citing_doc(self):
         """ Get Document of citing url """
-        return Document(self.citing_url)
+        return Document(self.citing_url())
+
+    def citing_doc_encoding(self):
+        return self.citing_doc().encoding()
 
     def citing_raw(self):
         """ Get text-version of citing document """
         citing_raw = self.citing_raw_input
         if not citing_raw:
             if self.citing_doc():
-                citing_raw = citing_doc.raw()
+                citing_raw = self.citing_doc.raw()
         return citing_raw
 
     def citing_text(self):
@@ -156,7 +161,7 @@ class Quote:
             supply a non-canonical url.
 
             Certain characters (and all spaces) in the citing_quote are removed
-            to decrease the likelihood that character irregularites
+            to decrease the likelihood that character irregularities
             throw off the hash
         """
 
@@ -165,11 +170,14 @@ class Quote:
 
         citing_quote = self.citing_quote()
         citing_quote = TextConvert(citing_quote).escape()
+        citing_url = self.citing_url_canonical()
+        cited_url = self.cited_url()
+
 
         return ''.join([
-                    citing_quote, '|',
-                    self.citing_url_canonical(), '|',
-                    self.cited_url() # future: replace with: self.cited_url_canonical ?
+            citing_quote, '|',
+                    url_without_protocol(citing_url), '|',
+                    url_without_protocol(cited_url)  # future: replace with: self.cited_url_canonical ?
                 ])
 
     def hash(self):
@@ -178,9 +186,9 @@ class Quote:
         """
         hash_method = getattr(hashlib, HASH_ALGORITHM)
         hash_text = self.hashkey()
-        #print('>> Hashkey: ' + hash_text)
-        #print(' ')
-        return hash_method(hash_text.encode('utf-8')).hexdigest()
+        encoding = self.citing_doc().encoding()
+
+        return hash_method(hash_text.encode(encoding)).hexdigest()
 
     def error(self):
         """

@@ -59,6 +59,7 @@ class Canonical_URL:
 
         return canonical_url
 
+
     def citeit_url(self):
         """ Use the canonical_url, if it exists.
             Otherwise, use the user-supplied url,
@@ -73,4 +74,11 @@ class Canonical_URL:
             citeit_url = re.sub(r"/#.*$/", "", self.url)
 
         # (4) Remove the protocol (http:// or https://)
-        return re.sub(r"/^(https?:|)\/\//", "", citeit_url)
+        return  url_without_protocol(citeit_url)
+
+
+def url_without_protocol(url):
+    """
+    remove https://
+    """
+    return re.sub(r"/^(https?:|)\/\//", "", url)

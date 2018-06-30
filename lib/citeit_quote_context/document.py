@@ -24,6 +24,7 @@ import re
 
 import urllib
 import chardet
+import ssl
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -36,7 +37,6 @@ class Document:
     """ Look up url and compute plain-text version of document
         Use caching to prevent repeated re-querying
 
-        Usage:
         url = 'https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html'
         doc = Document(url)
         page_text = doc.text()
@@ -47,46 +47,48 @@ class Document:
         self.num_downloads = 0  # count number of times the source is downloaded
         self.request_start = datetime.now()  # time how long request takes
         self.request_stop = None  # Datetime of last download
+        self.char_encoding = ''   # character encoding of document, returned by requests library
 
-    def url(self):
-        """ User-supplied URL, which may be different than the canonical URL """
-        return self.url
+    # def url(self):
+    #    return self.url
 
-    def download(self, convert_to_unicode=True):
+    def download_resource(self):
+        error = ''
+        url = self.url
+
+        try:
+            # Use a User Agent to simulate what a Firefox user would see
+            headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1;'
+                       ' WOW64; rv:57.0) Gecko/20100101 Firefox/57.0'}
+            r = requests.get(url, headers=headers, verify=False)
+            print('Downloaded ' + url)
+            self.request_stop = datetime.now()
+            print("Encoding: %s" % r.encoding )
+            self.increment_num_downloads()
+
+            text = r.text
+            content = r.content
+            encoding = r.encoding
+            error = ''
+
+        except requests.HTTPError:
+            self.request_stop = datetime.now()
+
+            """ TODO: Add better error tracking """
+            error = "document: HTTPError"
+
+        return  {   'text': text,
+                    'content': content,
+                    'encoding': encoding,
+                    'error': error
+                }
+
+    @lru_cache(maxsize=20)
+    def download(self, convert_to_unicode=False):
         """
             Download the data and update tracking metrics
         """
-        if convert_to_unicode:
-            try:
-                # Use a User Agent to simulate what a Firefox user would see
-                headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1;'
-                           ' WOW64; rv:57.0) Gecko/20100101 Firefox/57.0'}
-                r = requests.get(self.url, headers=headers, verify=False)
-                text = r.text
-
-                print('Downloaded ' + self.url)
-                self.request_stop = datetime.now()
-                self.increment_num_downloads()
-                return r.text
-
-            except requests.HTTPError:
-                self.request_stop = datetime.now()
-
-                """ TODO: Add better error tracking """
-                text = "document: HTTPError"
-                return text
-
-
-        else: # Don't convert to unicode
-            try:
-                with urllib.request.urlopen(self.url) as url:
-                    raw_data = url.read()
-                return raw_data
-
-            except urllib.error.URLError as e:
-                return "document: urllib.error: " + e.reason
-
-        return ''  # default to blank string
+        return self.download_resource()['text']  # default to blank string
 
     @lru_cache(maxsize=20)
     def text(self):
@@ -139,7 +141,7 @@ class Document:
             This method returns the raw, unprocessed data, but
             it is cached for performance reasons, using @lru_cache
         """
-        raw = self.download(convert_to_unicode=True)
+        raw = self.download(convert_to_unicode=False)
         if raw:
             return raw
         else:
@@ -169,7 +171,7 @@ class Document:
         if self.canonical_url():
             return self.canonical_url()
         else:
-            return self.url()
+            return self.url
 
     @lru_cache(maxsize=20)
     def data(self, verbose_view=False):
@@ -185,7 +187,6 @@ class Document:
             encoding = self.encoding()
             data['raw_original_encoding'] = self.raw(convert_to_unicode=False)
             data['encoding'] = encoding['encoding']
-            data['encoding_confidence'] = encoding['confidence']
             data['language'] = encoding['language']
             data['num_downloads'] = self.num_downloads
             data['request_start'] = self.request_start
@@ -195,26 +196,14 @@ class Document:
 
     @lru_cache(maxsize=20)
     def encoding(self):
-        """ Returns character-encoding for requested document using
-            chardet library
-
-            This detection performs an extra request because
-            I didn't take the time to figure out how to pass
-            the unicode output from "requests" to chardect, which expects binary
-
-            TODO: It may be that an extra request is required because
-            the requests library returns unicode.  If not, it would be good to
-            try to eliminate the extra request.
+        """ Returns character-encoding for requested document
         """
-        raw_data = self.download(convert_to_unicode=False)
-        self.increment_num_downloads()
-        return chardet.detect(raw_data)
+        resource = self.download_resource()
+        if 'encoding' in resource:
+            return resource['encoding'].lower()
 
-    def hexkey(self):
-        """ URL shortner: return MD5 hash of citing url """
-        url = self.citing_url_canonical.encode('utf-8')
-        key = base64.urlsafe_b64encode(hashlib.md5(url).digest())[:16]
-        return key.decode('utf-8')
+        return ''
+
 
     def request_start(self):
         """ When the Class was instantiated """
@@ -228,7 +217,7 @@ class Document:
         """ Elapsed time between instantiation and last download """
         return self.request_stop - self.request_start
 
-    def increment_num_downloads(self):
+    def increment_num_downloads(self) -> int:
         """ Increment download counter """
         self.num_downloads = self.num_downloads + 1
         return self.num_downloads
