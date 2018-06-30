@@ -1,3 +1,4 @@
+@@ -1,105 +0,0 @@
 # Copyright (C) 2015-2018 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
@@ -7,17 +8,7 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
-from models import Quote
-from sqlalchemy import update
-import settings
 import json
-
-from settings import AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_S3_BUCKET, AMAZON_S3_ENDPOINT
-from settings import JSON_FILE_PATH, VERSION_NUM
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -37,12 +28,6 @@ class Citation:
         self.data = data
 
     def save(self):
-        """
-            Save data to: database, local json file, upload json to cloud
-        """
-        # self.db_save()
-        # self.json_save()
-        # self.json_upload()
         return 1
 
     def db_save(self):
@@ -51,19 +36,6 @@ class Citation:
         """
         print("saving to db ..")
 
-        """
-        engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
-        Session = sessionmaker(bind=engine)
-        q = Quote(**self.data)
-        session = Session()
-
-        # Check if record already exists:
-        if not session.query(Quote).filter(Quote.sha256 == self.data['sha256']).count():
-            session.add(q)
-        else:
-            update(Quote).where(Quote.sha256 == self.data['sha256']).values(**self.data)
-        session.commit()
-        """
 
     def json_fields(self):
         """
@@ -92,7 +64,7 @@ class Citation:
         """
         print("saving json locally")
         filename = ''.join([self.data['sha256'], '.json'])
-        local_filename = ''.join([JSON_FILE_PATH, filename])
+        local_filename = ''.join([settings.JSON_FILE_PATH, filename])
 
         with open(local_filename, 'w') as outfile:
             json.dump(self.json_data(), outfile, indent=4, ensure_ascii=False)

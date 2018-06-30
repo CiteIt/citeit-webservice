@@ -1,2 +1,2 @@
-web: gunicorn citation.py:app
+web: gunicorn CiteIt.py:app
 
