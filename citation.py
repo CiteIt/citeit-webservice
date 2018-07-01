@@ -1,4 +1,3 @@
-@@ -1,105 +0,0 @@
 # Copyright (C) 2015-2018 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #

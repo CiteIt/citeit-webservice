@@ -1,0 +1,15 @@
+{ "name": "Flask Heroku Sample",
+  "description": "A sample Flask app on Heroku",
+  "keywords": [
+    "flask",
+    "python",
+    "CiteIt",
+  ],
+  "repository": "https://github.com/CiteIt/CiteIt_Flask_API",
+  "scripts": {
+    "postdeploy": "python -c 'print("postdeploy test")'
+  },
+  "addons": [
+    "heroku-postgresql"
+  ]
+}
