@@ -13,3 +13,9 @@ venv/
 *.pyc
 
 settings.py
+aws_policy.json
+.idea/inspectionProfiles/Project_Default.xml
+.idea/codeStyles/codeStyleConfig.xml
+private-settings.json
+zappa_settings.json
+static/Kuhn.pdf

@@ -6,7 +6,7 @@ to **demonstrate the context of their quotations** by helping them display the
 
 ## View Demo: ##
 Demo site with video:
-  * https://www.neotext.net/demo/
+  * https://www.CiteIt.net/
 
 ## Tools Used ##
   * **API Server**: [Python](https://www.python.org/) [Flask](http://flask.pocoo.org/) Server
@@ -56,8 +56,7 @@ I got this idea in 2015, while I was writing an article about hypertext pioneer
 
   * https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html
 
-I know CiteIt still follows the [Worse is Better](https://en.wikipedia.org/wiki/Worse_is_better) 
-approach of the web, because I don't have the technical ability to implement the 
+Like the Web, CiteIt still follows the "[Worse is Better](https://www.dreamsongs.com/WorseIsBetter.html)" approach because I don't have the technical ability or resources to implement the 
 "Right Thing".
 
 I hope CiteIt allows more people to get a glimpse of Ted's original proposal and 
