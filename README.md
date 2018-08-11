@@ -56,7 +56,7 @@ I got this idea in 2015, while I was writing an article about hypertext pioneer
 
   * https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html
 
-Like the Web, CiteIt still follows the "[Worse is Better](https://www.dreamsongs.com/WorseIsBetter.html)" approach because I don't have the technical ability or resources to implement the 
+Like the Web, CiteIt still follows the "[Worse is Better](https://www.dreamsongs.com/RiseOfWorseIsBetter.html)" approach because I don't have the technical ability or resources to implement the 
 "Right Thing".
 
 I hope CiteIt allows more people to get a glimpse of Ted's original proposal and 
