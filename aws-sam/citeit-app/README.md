@@ -23,8 +23,8 @@ The command below starts the Minio server and creates a */data* directory when t
 
 ```
 docker run -p 9000:9000 --name minio1 \
-  -e "MINIO_ACCESS_KEY=SOMEACCESSKEYEXAMPLE" \
-  -e "MINIO_SECRET_KEY=aSecRetKey/PickSomethinggPleaseAndTHANKS" \
+  -e "MINIO_ACCESS_KEY=ABCDEFGH123456789" \
+  -e "MINIO_SECRET_KEY=alksdfj;2452lkjr;ajtsaljgfslakjfgassgf" \
   minio/minio server /data
 ```
 
@@ -33,8 +33,8 @@ docker run -p 9000:9000 --name minio1 \
 
 ```
 docker run -p 9000:9000 --name minio1 \
-  -e "MINIO_ACCESS_KEY=SOMEACCESSKEYEXAMPLE" \
-  -e "MINIO_SECRET_KEY=aSecRetKey/PickSomethinggPleaseAndTHANKS" \
+  -e "MINIO_ACCESS_KEY=ABCDEFGH123456789" \
+  -e "MINIO_SECRET_KEY=alksdfj;2452lkjr;ajtsaljgfslakjfgassgf" \
   -v /mnt/data:/data \
   -v /mnt/config:/root/.minio \
   minio/minio server /data
