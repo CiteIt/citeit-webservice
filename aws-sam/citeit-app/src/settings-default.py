@@ -7,5 +7,5 @@ AMAZON_S3_ENDPOINT = 's3.amazonaws.com'
 
 VERSION_NUM = '0.30'  # used to version the sha256 hash filename
 
-JSON_FILE_PATH = '/Users/timlangeman/Documents/citeit/json/'
+JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
 SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost/database_name'
