@@ -5,9 +5,9 @@ from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL    # lookup quotes
 import settings
-import boto
-import boto.s3.connection
+import boto3
 import json
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -70,25 +70,22 @@ def post_url():
             print("Saving Json locally ..")
             json_file = json.dumps(quote_json)
             json_filename = ''.join([c.data['sha256'], '.json'])
-            json_full_filepath = ''.join(['/Library/WebServer/Documents/', 'quote/sha256/0.3/', c.data['sha256'], '.json'])
+            json_full_filepath = os.path.join(settings.JSON_FILE_PATH, 'quote', 'sha256', '0.3', json_filename)
             with open(json_full_filepath, 'w+') as f:
                 f.write(json_file)
 
             print("Saving Json to S3 ..")
 
             # Upload JSON to Amazon S3
-            s3_connection = boto.connect_s3(
-               aws_access_key_id = settings.AMAZON_ACCESS_KEY,
-               aws_secret_access_key = settings.AMAZON_SECRET_KEY,
-               calling_format=boto.s3.connection.OrdinaryCallingFormat(),
-               is_secure=False  # avoid SSL Errors
-            )
-            bucket = s3_connection.get_bucket(settings.AMAZON_S3_BUCKET)
+
+            s3_resource = boto3.resource('s3', endpoint_url=settings.AMAZON_S3_ENDPOINT,
+                                         config=boto3.session.Config(signature_version='s3v4'),
+                                         aws_access_key_id=settings.AMAZON_ACCESS_KEY,
+                                         aws_secret_access_key=settings.AMAZON_SECRET_KEY,
+                                         )
             shard = json_filename[:2]
-            bucket_path = ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
-            key = boto.s3.key.Key(bucket, bucket_path)
-            key.set_contents_from_filename(json_full_filepath)
-            key.set_acl('public-read')
+            file_key = ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
+            s3_resource.Bucket(settings.AMAZON_S3_BUCKET).put_object(Key=file_key, Body=open(json_full_filepath, 'rb'))
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
