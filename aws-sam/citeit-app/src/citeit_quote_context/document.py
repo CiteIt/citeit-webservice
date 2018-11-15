@@ -9,22 +9,11 @@
 
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from bs4 import BeautifulSoup
-from html.parser import HTMLParser
 from functools import lru_cache
-from urllib.parse import urlparse
 import requests
-import base64
-import hashlib
 from datetime import datetime
-import html
-import chardet  # Character encoding detection: http://chardet.readthedocs.io/
 import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/
-import time
 import re
-
-import urllib
-import chardet
-import ssl
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"

@@ -8,8 +8,7 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-from lib.google_diff_match_patch.diff_match_patch \
-    import diff_match_patch
+from lib.google_diff_match_patch.diff_match_patch import diff_match_patch
 from functools import lru_cache
 
 __author__ = 'Tim Langeman'

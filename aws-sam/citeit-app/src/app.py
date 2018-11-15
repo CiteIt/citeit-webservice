@@ -1,6 +1,3 @@
-from flask import Flask
-from flask import request
-from flask import jsonify
 from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL    # lookup quotes
@@ -9,18 +6,7 @@ import boto3
 import json
 import os
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
-
-
-@app.route('/hello')
-def hello_world(event, context):
-    return 'This is the CiteIt api!'
-
-
-@app.route('/', methods=['GET', 'POST'])
-def post_url():
+def lambda_handler(event, context):
     """
         Lookup citations referenced by specified url
         Find 500 characters before and after
@@ -30,13 +16,13 @@ def post_url():
 
         USAGE: http://localhost:5000/post/url/https://www.neotext.net/demo/
     """
+
+    query_params = event['queryStringParameters']
+
     saved_citations = {}
 
-    # GET URL Parameter
-    if request.method == "POST":
-        url_string = request.args.post('url', '')
-    else:
-        url_string = request.args.get('url', '')
+    url_string = query_params['url']
+
 
     # Check if URL is of a valid format
     parsed_url = parse.urlparse(url_string)
@@ -70,7 +56,12 @@ def post_url():
             print("Saving Json locally ..")
             json_file = json.dumps(quote_json)
             json_filename = ''.join([c.data['sha256'], '.json'])
-            json_full_filepath = os.path.join(settings.JSON_FILE_PATH, 'quote', 'sha256', '0.3', json_filename)
+            json_dir_path = os.path.join(settings.JSON_FILE_PATH, 'quote', 'sha256', '0.3')
+
+            if not os.path.exists(json_dir_path):
+                os.makedirs(json_dir_path)
+            json_full_filepath = os.path.join(json_dir_path, json_filename)
+
             with open(json_full_filepath, 'w+') as f:
                 f.write(json_file)
 
@@ -92,8 +83,9 @@ def post_url():
             print(c.data['sha256'], ' ', c.data['citing_quote'])
 
 
-    return jsonify(saved_citations)
-
-
-if __name__ == '__main__':
-    app.run()
+    return {
+        "statusCode": 200,
+        "body": json.dumps(
+            saved_citations
+        ),
+    }

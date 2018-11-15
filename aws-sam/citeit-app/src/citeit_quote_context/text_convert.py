@@ -7,9 +7,6 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-from bs4 import BeautifulSoup
-import re
-
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2018 Tim Langeman"
