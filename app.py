@@ -85,7 +85,11 @@ def post_url():
                                          )
             shard = json_filename[:2]
             file_key = ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
-            s3_resource.Bucket(settings.AMAZON_S3_BUCKET).put_object(Key=file_key, Body=open(json_full_filepath, 'rb'))
+            s3_resource.Bucket(settings.AMAZON_S3_BUCKET).put_object(
+                Key=file_key,
+                Body=open(json_full_filepath, 'rb'),
+                ContentType="application/json"
+            )
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
