@@ -38,6 +38,7 @@ MarkupSafe==1.1.0
 poyo==0.4.2
 pyasn1==0.4.5
 pycparser==2.19
+pycryptodome==3.7.3
 pyOpenSSL==19.0.0
 python-dateutil==2.7.5
 pytz==2018.9
