@@ -90,6 +90,8 @@ def post_url():
                 Body=open(json_full_filepath, 'rb'),
                 ContentType="application/json"
             )
+            object_acl = s3_resource.ObjectAcl(settings.AMAZON_S3_BUCKET, file_key)
+            object_acl.put(ACL='public-read')
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
