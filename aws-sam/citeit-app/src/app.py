@@ -14,15 +14,12 @@ def lambda_handler(event, context):
         Save contextual data to database and
         Upload json file to cloud
 
-        USAGE: http://localhost:5000/post/url/https://www.neotext.net/demo/
+        USAGE: http://127.0.0.1:3000/citeit?url=https://www.citeit.net/
     """
 
     query_params = event['queryStringParameters']
-
     saved_citations = {}
-
     url_string = query_params['url']
-
 
     # Check if URL is of a valid format
     parsed_url = parse.urlparse(url_string)
@@ -37,61 +34,10 @@ def lambda_handler(event, context):
         for n, citation in enumerate(citations):
             print(n, ": saving citation.")
             c = Citation(citation)  # lookup citation
-            c.save()                # save citation to database
-
-            # Set JSON values
-            quote_json = {}
-            quote_json['citing_quote'] = c.data['citing_quote']
-            quote_json['sha256'] = c.data['sha256']
-            quote_json['citing_url'] = c.data['citing_url']
-            quote_json['cited_url'] = c.data['cited_url']
-            quote_json['citing_context_before'] = c.data['citing_context_before']
-            quote_json['cited_context_before'] = c.data['cited_context_before']
-            quote_json['citing_context_after'] = c.data['citing_context_after']
-            quote_json['cited_context_after'] = c.data['cited_context_after']
-            quote_json['cited_quote'] = c.data['cited_quote']
-
-
-            # Save JSON to local file
-            print("Saving Json locally ..")
-            json_file = json.dumps(quote_json)
-            json_filename = ''.join([c.data['sha256'], '.json'])
-            json_dir_path = os.path.join(settings.JSON_FILE_PATH, 'quote', 'sha256', '0.3')
-
-            if not os.path.exists(json_dir_path):
-                os.makedirs(json_dir_path)
-            json_full_filepath = os.path.join(json_dir_path, json_filename)
-
-            with open(json_full_filepath, 'w+') as f:
-                f.write(json_file)
-
-            print("Saving Json to S3 ..")
-
-            # Upload JSON to Amazon S3
-
-            s3_resource = boto3.resource('s3', endpoint_url=settings.AMAZON_S3_ENDPOINT,
-                                         config=boto3.session.Config(signature_version='s3v4'),
-                                         aws_access_key_id=settings.AMAZON_ACCESS_KEY,
-                                         aws_secret_access_key=settings.AMAZON_SECRET_KEY,
-                                         )
-            shard = json_filename[:2]
-            file_key = ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
-            s3_resource.Bucket(settings.AMAZON_S3_BUCKET).put_object(
-                Key=file_key,
-                Body=open(json_full_filepath,  'rb'),
-                ContentType="application/json"
-            )
-            object_acl = s3_resource.ObjectAcl(settings.AMAZON_S3_BUCKET, file_key)
-            object_acl.put(ACL='public-read')
-
-            # Output simple summary
-            saved_citations[c.data['sha256']] = c.data['citing_quote']
-            print(c.data['sha256'], ' ', c.data['citing_quote'])
-
+            c.save_all()            # save citation to json & database
+            saved_citations[c.json_data()['sha256']] = c.json_data()['citing_quote']
 
     return {
         "statusCode": 200,
-        "body": json.dumps(
-            saved_citations
-        ),
+        "body": json.dumps(saved_citations)
     }
