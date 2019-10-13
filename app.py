@@ -1,13 +1,17 @@
+#import remote_pdb
 from flask import Flask
 from flask import request
 from flask import jsonify
 from urllib import parse        # check if url is valid
-from citation import Citation   # provides a way to save quote and upload json
+from .citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL    # lookup quotes
 import settings
 import boto3
 import json
 import os
+
+#remote_pdb.RemotePdb('0.0.0.0', 5858).set_trace()
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,7 +32,7 @@ def post_url():
         Save contextual data to database and
         Upload json file to cloud
 
-        USAGE: http://localhost:5000/post/url/https://www.neotext.net/demo/
+        USAGE: http://localhost:5000/post/url/https://www.citeit.net/
     """
     saved_citations = {}
 
@@ -75,9 +79,20 @@ def post_url():
                 f.write(json_file)
 
             print("Saving Json to S3 ..")
+            shard = json_filename[:2]
+            remote_path= ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
+            
+	    # Upload JSON to Amazon S3
+	    s3 = boto3.resource('s3')
+	    s3.meta.client.upload_file(
+	        json_file,
+	        settings.AMAZON_S3_BUCKET,
+	        remote_path,
+	        ExtraArgs={'ContentType':"application/json", 'ACL': "public-read"}
+	    )
 
-            # Upload JSON to Amazon S3
 
+	    """
             s3_resource = boto3.resource('s3', endpoint_url=settings.AMAZON_S3_ENDPOINT,
                                          config=boto3.session.Config(signature_version='s3v4'),
                                          aws_access_key_id=settings.AMAZON_ACCESS_KEY,
@@ -92,6 +107,7 @@ def post_url():
             )
             object_acl = s3_resource.ObjectAcl(settings.AMAZON_S3_BUCKET, file_key)
             object_acl.put(ACL='public-read')
+	    """
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
