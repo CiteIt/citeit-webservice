@@ -12,17 +12,50 @@ From the command line:
 
   * http://docs.python-guide.org/en/latest/dev/virtualenvs/
   * Use a Virtual Environment to house all your libraries
-    * virtualenv citeit
+    * virtualenv venv
 
   * Activate to Virtual Environment
-    * source citeit/bin/activate
+    * source venv/bin/activate
 
   * You should see the command prompt change to something like:
-    * (citeit) Your Computer:your_username $
+    * (venv) Your Computer:your_username $
 
   * Install the requirements listed in the requirements text file
     * pip install -r requirements.txt
     * pip install 'requests[security]'
+
+
+Flask Local Setup
+=====================
+
+  export FLASK_APP=app
+  flask run
+
+
+Amazon Lambda Deployment:
+====================================================
+
+Documentation: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-quick-start.html
+
+
+cd aws-sam
+
+sam build --use-container
+
+cd sam-app
+
+sam local start-api
+
+sam package \
+    --output-template-file packaged.yaml \
+    --s3-bucket REPLACE_THIS_WITH_YOUR_S3_BUCKET_NAME
+
+
+sam deploy \
+    --template-file packaged.yaml \
+    --stack-name sam-app \
+    --capabilities CAPABILITY_IAM
+
 
 
 Optional Tools:
