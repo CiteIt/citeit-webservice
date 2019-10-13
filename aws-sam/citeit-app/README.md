@@ -19,7 +19,7 @@ The commands below are based on the [Minio Docker Quick Start Guide](https://doc
 docker pull minio/minio
 ```
 
-The command below starts the Minio server and creates a */data* directory when the container starts. **All of the data will be lost when the container exists.** This is generally fine for testing purposes.
+The command below starts the Minio server and creates a */data* directory when the container starts. **All of the data will be lost when the container exits.** This is generally fine for testing purposes.
 
 ```
 docker run -p 9000:9000 --name minio1 \
