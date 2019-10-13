@@ -34,6 +34,8 @@ class Citation:
         self.json_save_local(debug)
         self.json_upload(debug)
         self.db_save(debug)
+        self.register_page(debug)
+
 
     def db_save(self, debug=False):
         # Save Quote data to database, using SQLAlchemy
@@ -51,9 +53,9 @@ class Citation:
         return [
             'sha256',
             'citing_url', 'citing_quote',
-            'citing_context_before', 'citing_context_before',
+            'citing_context_before', 'citing_context_after',
             'cited_url', 'cited_quote',
-            'cited_context_before', 'cited_context_before'
+            'cited_context_before', 'cited_context_after',
         ]
 
     def json_data(self):

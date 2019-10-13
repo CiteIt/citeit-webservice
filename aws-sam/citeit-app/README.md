@@ -42,7 +42,7 @@ docker run -p 9000:9000 --name minio1 \
 
 ### Writing Python code that can use either S3 or Minio
 
-The following using the boto3 library (AWS Pyton SDK) in order to create a bucket and upload a existing files to the Minio server.
+The following uses the boto3 library (AWS Python SDK) in order to create a bucket and upload a existing files to the Minio server.
 
 ```
 import boto3
@@ -176,11 +176,25 @@ nc -C 127.0.0.1 5858    # This worked on Mac OSX
 socat socat readline tcp:127.0.0.1:5858
 ```
 
-Breakout into pyhthon shell with current variables
+Breakout into python shell with current variables
 
 ```
 !import code; code.interact(local=vars())
 
 ```
 
+###Other Docker Commands
+```
+docker ps -a          (system status: uptime)
+docker images -a      (list all images)
+docker rmi  [image hash example: 12a86fe64bc8]
+docker save -o /path/to/output/file [image: 12a86fe64bc8]
 
+docker tag citeit_minio citeit/citeit_minio
+docker push citeit/citeit_minio
+
+docker tag 62cc52d59225 citeit/citeit_webservice
+docker push citeit/citeit_webservice
+
+```
+https://stackoverflow.com/questions/41984399/denied-requested-access-to-the-resource-is-denied-docker
