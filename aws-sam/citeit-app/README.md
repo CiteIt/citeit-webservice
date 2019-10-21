@@ -198,3 +198,8 @@ docker push citeit/citeit_webservice
 
 ```
 https://stackoverflow.com/questions/41984399/denied-requested-access-to-the-resource-is-denied-docker
+
+
+docker run -p 9000:9000 --name minio1 \
+docker run -p 80:3000 citeit/citeit_webservice [COMMAND] [ARG...]
+

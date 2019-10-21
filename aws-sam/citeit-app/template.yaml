@@ -33,7 +33,7 @@ Outputs:
 
     CiteItApi:
       Description: "API Gateway endpoint URL for Prod stage for CiteIt function"
-      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/citeit/"
+        Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/citeit/"
 
     CiteItFunction:
       Description: "CiteIt Lambda Function ARN"
