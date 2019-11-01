@@ -32,29 +32,10 @@ Flask Local Setup
   flask run
 
 
-Amazon Lambda Deployment:
-====================================================
-
-Documentation: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-quick-start.html
+Docker Setup:
+====================
 
 
-cd aws-sam
-
-sam build --use-container
-
-cd sam-app
-
-sam local start-api
-
-sam package \
-    --output-template-file packaged.yaml \
-    --s3-bucket REPLACE_THIS_WITH_YOUR_S3_BUCKET_NAME
-
-
-sam deploy \
-    --template-file packaged.yaml \
-    --stack-name sam-app \
-    --capabilities CAPABILITY_IAM
 
 
 

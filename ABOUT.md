@@ -27,7 +27,7 @@ web to make it simulate something more akin to Nelson's vision.
 
 Read Demo Article about Ted
 ----------------------------
-You can read Tim Langeman review of Ted Nelson's thesis at and see note 
+You can read Tim Langeman's review of Ted Nelson's thesis at and see
 how the citations expand to provide additional context.
   * https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html
 
@@ -36,12 +36,10 @@ Disclaimer: A Beginning
 -------------------------
 CiteIt is a continuation of the web's 
 "[Worse is Better](https://en.wikipedia.org/wiki/Worse_is_better)" 
-aproach to hypertext.  It is not Ted Nelson's deisign, 
+aproach to hypertext.  It is not Ted Nelson's design, 
 but is hoped that by providing a glimpse of 
 Ted's vision, others will be inspired to work towards 
 the fuller Xanadu vision.
 
-
 -[Tim Langeman](http://www.openpolitics.com/tim)
-
  
