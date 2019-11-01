@@ -96,15 +96,22 @@ def post_url():
             print("Saving Json to S3 ..")
             shard = json_filename[:2]
             remote_path= ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
+            print("JSON Path: " + json_file)
+            print("Remote path: " + remote_path)
 
             # Upload JSON to Amazon S3
-            #s3 = boto3.resource('s3')
-            #s3.meta.client.upload_file(
-            #    json_file,
-            #    settings.AMAZON_S3_BUCKET,
-	    #    remote_path,
-	    #    ExtraArgs={'ContentType':"application/json", 'ACL': "public-read"}
-	    #)
+            session = boto3.Session(
+                aws_access_key_id=settings.AMAZON_ACCESS_KEY,
+                aws_secret_access_key=settings.AMAZON_SECRET_KEY
+            )
+            
+            s3 = session.resource('s3')
+            s3.meta.client.upload_file(
+                Filename=json_full_filepath,
+                Bucket=settings.AMAZON_S3_BUCKET,
+	        Key=remote_path,
+	        ExtraArgs={'ContentType':"application/json", 'ACL': "public-read"},
+            )
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
