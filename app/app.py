@@ -46,13 +46,13 @@ def post_url():
         Save contextual data to database and
         Upload json file to cloud
 
-        USAGE: http://localhost:5000/post/url/https://www.citeit.net/
+        USAGE: http://localhost:5000/?url=https://www.citeit.net/
     """
     saved_citations = {}
 
     # GET URL Parameter
     if request.method == "POST":
-        url_string = request.args.post('url', '')
+        url_string = request.form.get('url', '')
     else:
         url_string = request.args.get('url', '')
 
@@ -122,5 +122,5 @@ def post_url():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=80, debug=False)
 
