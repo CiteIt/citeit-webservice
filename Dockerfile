@@ -1,4 +1,6 @@
-FROM python:3.6
+FROM python:3.7-slim-buster
+
+# SET LABELS: DOCUMENTATIONS 
 LABEL vendor="CiteIt.net"
 LABEL maintainer="Tim Langeman <timlangeman@gmail.com>"
 LABEL org.label-schema.name="CiteIt.net webservice"
@@ -9,22 +11,34 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.label-schema.docker.schema-version="0.5"
 LABEL org.label-schema.docker.cmd="docker run -d -p 80:80 citeit_webservice" 
 
+# LABEL BUILD DATE (AUTOMATICALLY)
 ARG BUILD_DATE
 LABEL org.label-schema.build_date=$BUILD_DATE
 
-COPY . /app
-WORKDIR /app
-RUN pip install -r requirements.txt
+# INSTALL UPDATES & REQUIREMENTS 
+RUN apt-get upgrade 
+RUN pip3 install requests
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
 
+# COPY APP
+COPY . /citeit 
+WORKDIR /citeit/app
+RUN chmod 755 /citeit/app
+
+#SET ENVIRONMENTAL VARIABLES
 ENV AMAZON_ACCESS_KEY 'secret_access_key'
 ENV AMAZON_SECRET_KEY 'secret_key'
 ENV AMAZON_S3_BUCKET 'read.citeit.net'
 ENV AMAZON_S3_ENDPOINT 's3.amazonaws.com'
 ENV AMAZON_REGION_NAME 'us-east-1'
 ENV VERSION_NUM 0.3
-ENV JSON_FILE_PATH '/var/www/citeit-webservice/json/'
+ENV JSON_FILE_PATH '/citeit/json/quote/sha256/0.3/'
+ENV FLASK_RUN_PORT 80
+ENV FLASK_APP app.py
+ENV PATH /citeit/app:$PATH
 
 EXPOSE 80
-ENTRYPOINT ["python"]
-CMD ["app/app.py"]
+ENTRYPOINT [ "python" ]
+CMD ["app.py", "--host=0.0.0.0", "-p 80"]
 

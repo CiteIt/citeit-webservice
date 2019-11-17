@@ -34,7 +34,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 
 @app.route('/hello')
 def hello_world(event, context):
-    return 'This is the CiteIt api!'
+    return 'Hello, This is the CiteIt api!'
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -88,14 +88,14 @@ def post_url():
             print("Saving Json locally ..")
             json_file = json.dumps(quote_json)
             json_filename = ''.join([c.data['sha256'], '.json'])
-            json_full_filepath = os.path.join(settings.JSON_FILE_PATH, 'quote', 'sha256', '0.3', json_filename)
+            json_full_filepath = os.path.join(settings.JSON_FILE_PATH, json_filename)
             print("Full Filepath: " + json_full_filepath)
             with open(json_full_filepath, 'w+') as f:
                 f.write(json_file)
 
             print("Saving Json to S3 ..")
             shard = json_filename[:2]
-            remote_path= ''.join(["quote/sha256/", settings.VERSION_NUM, "/", shard, "/", json_filename])
+            remote_path= ''.join(["quote/sha256/", str(settings.VERSION_NUM), "/", str(shard), "/", json_filename])
             print("JSON Path: " + json_file)
             print("Remote path: " + remote_path)
 
@@ -117,10 +117,8 @@ def post_url():
             saved_citations[c.data['sha256']] = c.data['citing_quote']
             print(c.data['sha256'], ' ', c.data['citing_quote'])
 
-
     return jsonify(saved_citations)
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80, debug=False)
+    app.run(host='0.0.0.0', port=80, debug=True)
 
