@@ -17,9 +17,8 @@ LABEL org.label-schema.build_date=$BUILD_DATE
 
 # INSTALL UPDATES & REQUIREMENTS 
 RUN apt-get upgrade 
-RUN pip3 install requests
-COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 # COPY APP
 COPY . /citeit 
