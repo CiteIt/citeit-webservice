@@ -50,6 +50,22 @@ visitors to load the contextual json files from the Amazon S3 Cloud.
 into hidden &lt;div&gt; elements created in the author's page, which display when
 a reader clicks on an arrow above or below the quotation.
 
+## Setup:
+
+### Flask:
+cd app/
+cp settings-default.py settings.py
+(populate settings.py with own passwords)
+
+export FLASK_APP=app.py
+set FLASK_RUN_PORT=80
+python3 -m flask run --host=0.0.0.0 --port=80
+
+### Docker:
+docker build -t citeit_webservice:latest .
+
+docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
+
 ## Inspiration:
 I got this idea in 2015, while I was writing an article about hypertext pioneer
 [Ted Nelson](https://en.wikipedia.org/wiki/Ted_Nelson).
