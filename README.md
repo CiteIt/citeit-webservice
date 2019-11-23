@@ -19,10 +19,12 @@ Demo site with video:
         fuzzy text matching algorithm
     * [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/): used to convert html 
         to text and locate the canonical urls within html
+    * [Flask](https://palletsprojects.com/p/flask/)
+    * [SQL Alchemy](https://www.sqlalchemy.org/)
+    * [boto3](https://github.com/boto/boto3)
     * Python [Requests](http://docs.python-requests.org/en/master/): HTTP for humans
     * [ftfy](http://ftfy.readthedocs.io/en/latest/): convert bad unicode to good unicode
               
-
 
 
 ## How CiteIt Works:
@@ -54,11 +56,15 @@ a reader clicks on an arrow above or below the quotation.
 
 ### Flask:
 cd app/
+
 cp settings-default.py settings.py
+
 (populate settings.py with own passwords)
 
 export FLASK_APP=app.py
+
 set FLASK_RUN_PORT=80
+
 python3 -m flask run --host=0.0.0.0 --port=80
 
 ### Docker:
