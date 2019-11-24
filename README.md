@@ -12,8 +12,13 @@ Demo site with video:
   * **API Server**: [Python](https://www.python.org/) [Flask](http://flask.pocoo.org/) Server
   * **Database**: [SQL Alchemy](https://www.sqlalchemy.org/), 
                   ([Postgres](https://www.postgresql.org/) or Other Database)
-  * **jQuery Library**: custom function to wrap &lt;blockquote&lt; and &lt;q&gt; tags
-  * **Wordpress Plugin**: adds buttons to Wordpress editor.  Submits pages to API.
+  * **[jQuery Library](https://github.com/CiteIt/citeit-jquery)**: custom function to wrap &lt;blockquote&lt; and &lt;q&gt; tags
+  * **[Wordpress Plugin](https://github.com/CiteIt/citeit-wordpress)**: 
+    * adds buttons to Wordpress editor for blockquote and pre tags.
+    * the working version was written before  Gutenberg.
+    * (looking for help creating a Gutenberg version of the plugin)
+    * Submits pages to API.
+    
   * **Dependencies**: 
     * [Google Diff Match Patch](https://code.google.com/archive/p/google-diff-match-patch/):
         fuzzy text matching algorithm
@@ -30,7 +35,8 @@ Demo site with video:
 ## How CiteIt Works:
 
 1. An author notifies the CiteIt Web Service that they have created a new
-citation by sending a HTTP POST request with the URL of the author's page.
+citation by sending a HTTP POST request with the URL of the author's page 
+to api.citeit.net.
 
 1. The CiteIt Web Service retrieves the author's page and locates all the
 citations within the document, saving the urls and the text of each citation.
@@ -79,7 +85,7 @@ I got this idea in 2015, while I was writing an article about hypertext pioneer
   * https://www.openpolitics.com/articles/ted-nelson-philosophy-of-hypertext.html
 
 Like the Web, CiteIt still follows the "[Worse is Better](https://www.dreamsongs.com/RiseOfWorseIsBetter.html)" approach because I don't have the technical ability or resources to implement the 
-"Right Thing".
+Ted's "Right Thing".
 
 I hope CiteIt allows more people to get a glimpse of Ted's original proposal and 
 inspires other programmers to built towards that vision.
