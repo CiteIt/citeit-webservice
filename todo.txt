@@ -1,0 +1,23 @@
+x create citeit-wordpress: s3 upload for form submission
+x create citeit-wordpress zip file
+x Upload to downloads.citeit.net
+x Create Docker Compose
+x Prune requirements Dependencies
+x Test citeit-webservice on Flask, Docker
+
+  Test List of URL Hashes
+
+  Update Demo Pages:
+  	Al Gore/Sarah Palin
+	Ted Nelson: Hypertext:  Test/Reduce number of simultanous quotes
+
+  Create postgres database save json. Setup Postgres DB
+
+  Test Docker Compose
+  Create ReadTheDocs documentation
+  Create demo video
+
+  Update citeit-webservice: make AWS upload optional + postgres optional
+
+  
+  
