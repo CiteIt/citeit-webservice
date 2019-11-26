@@ -26,7 +26,9 @@ class QuoteHashTest:
         hash_javascript,
         citing_quote,
         citing_url,
-        cited_url
+        cited_url,
+        hashkey_citing
+
     ):
         self.hash_javascript = hash_javascript
         self.citing_quote = citing_quote
@@ -46,5 +48,24 @@ class QuoteHashTest:
         return q.hash()
 
     def hash_match(self):
-        return "1234"
-        #return (str(self.hash_javascript()) == str(self.hash_computed()))
+        return (self.hash_cited()) == (self.hash_citing())
+
+    def hash_citing(self):
+        return self.hash_javascript
+
+    def hash_cited(self):
+        q = Quote(
+            self.citing_quote,  # excerpt from citing document
+            self.citing_url,    # url of the document that is doing the quoting
+            self.cited_url,     # url of document that is being quoted
+        )
+        return q.hash()
+
+    def hashkey_cited(self):
+        q = Quote(
+            self.citing_quote,  # excerpt from citing document
+            self.citing_url,    # url of the document that is doing the quoting
+            self.cited_url,     # url of document that is being quoted
+        )
+        return q.hashkey()
+
