@@ -6,6 +6,7 @@ app/settings_secret.py
 citeit.env
 
 json/quote/sha256/*
+*.DS_Store
 
 .idea/* 
 .idea/codeStyles/codeStyleConfig.xml
