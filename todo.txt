@@ -4,8 +4,9 @@ x Upload to downloads.citeit.net
 x Create Docker Compose
 x Prune requirements Dependencies
 x Test citeit-webservice on Flask, Docker
+x Test List of URL Hashes
 
-  Test List of URL Hashes
+  update citeit-wordpress to include lib/jquery
 
   Update Demo Pages:
   	Al Gore/Sarah Palin
