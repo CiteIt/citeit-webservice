@@ -20,7 +20,7 @@ __copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
 __license__ = "MIT"
 __version__ = "0.3"
 
-debug = False
+debug = True
 
 filepath = "test_data/hashkeyTests - version3.csv"
 column_names = ['CitingURL', 'Quote', 'CitedURL', 'JavascriptHash', 'JavascriptHashKey']
@@ -29,28 +29,49 @@ url_results = {}
 file = open(os.path.join(filepath), "r")
 reader = csv.DictReader(file, delimiter=',')
 
-for row in reader:
+for row_num, row in enumerate(reader):
+    #print("########################################################")
     for column_name in column_names:
         if debug:
-            print(column_name, " : " , row[column_name])
+            # print(column_name, " : " , row[column_name])
+            pass
 
     q = QuoteHashTest(
-        row['JavascriptHash'],
-        row['Quote'],   # excerpt from citing document
+        row['Quote'],         # excerpt from citing document
         row['CitingURL'],     # url of the document that is doing the quoting
         row['CitedURL'],      # url of document that is being quoted
+        row['JavascriptHash'],
         row['JavascriptHashKey']
+
     )
 
     if debug:
-        print("URL:         " + str(q.citing_url))
-        print("Quote:       " + str(q.citing_quote))
+        print(str(row_num) + "--------------------------------------------------------")
 
-        print("Citing Hash:  " + q.hash_citing())
-        print("Cited Hash:   " + str(q.hash_cited()))
+        if q.hashkey_match():
+            # print("URL Match: " + str(q.citing_url))
+            pass
 
-    url_results[row['CitingURL']] = q.hash_match()
+        else:
+            print("########################################################")
+            print("HASH <>")
+            print("URL: " + str(q.citing_url))
+            print("Quote:       " + str(q.citing_quote))
 
+            print("HASHKEY JS:     : " + str(q.hashkey_javascript))
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            print("HASHKEY COMPUTED: " + str(q.hashkey_computed()))
+
+            print("JS Hash      :  " + str(q.hash_javascript))
+            print("Computed Hash:  " + str(q.hash_computed()))
+            print("########################################################")
+
+    url_results[row['CitingURL']] = q.hashkey_match() # q.hashkey_computed()  #
+
+
+print("# RESULTS:")
 for url, url_match in url_results.items():
-    print(str(url_match), ":", url)
+    if not url_match:
+        print(str(url_match), ":", url)
+        pass
      
