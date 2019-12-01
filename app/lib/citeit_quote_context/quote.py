@@ -165,17 +165,12 @@ class Quote:
             throw off the hash
         """
 
-        # soup = BeautifulSoup(self.citing_quote, "html.parser")
-        # citing_quote = soup.get_text()
-
         citing_quote = self.citing_quote()
         citing_quote = html_to_text(citing_quote)
         citing_quote = TextConvert(citing_quote).escape()
 
-
         citing_url = self.citing_url_canonical()
         cited_url = self.cited_url()
-
 
         return ''.join([
             citing_quote, '|',
