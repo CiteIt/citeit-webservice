@@ -10,7 +10,15 @@
 # http://www.opensource.org/licenses/mit-license
 
 from lib.citeit_quote_context.quote import Quote
+from lib.citeit_quote_context.url import URL
+from lib.citeit_quote_context.text_convert import TextConvert
+from lib.citeit_quote_context.text_convert import html_to_text
+from lib.citeit_quote_context.text_convert import levenshtein_distance
+from lib.citeit_quote_context.text_convert import show_diff
 
+import os
+import csv
+import requests
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -30,6 +38,15 @@ class QuoteHashTest:
         hashkey_javascript      # citingquote|http://citing.com|http://cited.com
 
     ):
+        # Lookup Citing Quote from source: (important to get actual encoding)
+        u = URL(citing_url)
+        citations = u.citations()
+        for quote in citations:
+            cited_url = quote['cited_url']
+            citing_quote = quote['citing_quote']
+            citing_quote = html_to_text(citing_quote)
+            citing_quote = TextConvert(citing_quote).escape()
+
         self.citing_quote = citing_quote
         self.citing_url = citing_url
         self.cited_url = cited_url
@@ -43,6 +60,9 @@ class QuoteHashTest:
             self.cited_url     # url of document that is being quoted
         )
         return q
+
+    def citing_url(self):
+        return self.citing_url
 
     def citing_quote(self):
         return self.citing_quote
@@ -66,3 +86,9 @@ class QuoteHashTest:
 
     def hashkey_match(self):
         return self.hashkey_javascript == self.hashkey_computed()
+
+    def hashkey_diff(self):
+        return show_diff(self.hashkey_computed(), self.hashkey_javascript)
+
+    def hashkey_diff_length(self):
+        return len(self.hashkey_diff())
