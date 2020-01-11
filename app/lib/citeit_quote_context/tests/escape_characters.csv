@@ -1,0 +1,88 @@
+"CodeNum","Code","Glyph","Decimal","HTML","Description","#"
+"0000","\u0000",'',"0",'',"Null character","NUL"
+"0001","\u0001",'',"1",'',"Start of Heading","SOH"
+"0002","\u0002",'',"2",'',"Start of Text","STX"
+"0003","\u0003",'',"3",'',"End-of-text character","ETX"
+"0004","\u0004",'',"4",'',"End-of-transmission character","EOT"
+"0005","\u0005",'',"5",'',"Enquiry character","ENQ"
+"0006","\u0006",'',"6",'',"Acknowledge character","ACK"
+"0007","\u0007",'',"7",'',"Bell character","BEL"
+"0008","\u0008",'',"8",'',"Backspace","BS"
+"0009","\u0009",'',"9",'',"Horizontal tab","HT"
+"000A","\u000A",'',"10",'',"Line feed","LF"
+"000B","\u000B",'',"11",'',"Vertical tab","VT"
+"000C","\u000C",'',"12",'',"Form feed","FF"
+"000D","\u000D",'',"13",'',"Carriage return","CR"
+"000E","\u000E",'',"14",'',"Shift Out","SO"
+"000F","\u000F",'',"15",'',"Shift In","SI"
+"0010","\u0010",'',"16",'',"Data Link Escape","DLE"
+"0011","\u0011",'',"17",'',"Device Control 1","DC1"
+"0012","\u0012",'',"18",'',"Device Control 2","DC2"
+"0013","\u0013",'',"19",'',"Device Control 3","DC3"
+"0014","\u0014",'',"20",'',"Device Control 4","DC4"
+"0015","\u0015",'',"21",'',"Negative-acknowledge character","NAK"
+"0016","\u0016",'',"22",'',"Synchronous Idle","SYN"
+"0017","\u0017",'',"23",'',"End of Transmission Block","ETB"
+"0018","\u0018",'',"24",'',"Cancel character","CAN"
+"0019","\u0019",'',"25",'',"End of Medium","EM"
+"001A","\u001A",'',"26",'',"Substitute character","SUB"
+"001B","\u001B",'',"27",'',"Escape character","ESC"
+"001C","\u001C",'',"28",'',"File Separator","FS"
+"001D","\u001D",'',"29",'',"Group Separator","GS"
+"001E","\u001E",'',"30",'',"Record Separator","RS"
+"001F","\u001F",'',"31",'',"Unit Separator","US"
+"0020","\u0020",'',"32",'',"Space","1"
+"0027","\u0027","'","39",'',"Apostrophe","8"
+"0060","\u0060","`","96",'',"Grave accent","65"
+"00A0","\u00A0"," ","0160","&nbsp;","Non-breaking space","0096"
+"00AD","\u00AD"," ","0173","&shy;","Soft hyphen","109"
+"02BB","\u02BB","ʻ","699",'',"Modifier Letter Turned Comma","356"
+"02BC","\u02BC","ʼ","700",'',"Modifier Letter Apostrophe","357"
+"02BD","\u02BD","ʽ","701",'',"Modifier Letter Reversed Comma","358"
+"02BE","\u02BE","ʾ","702",'',"Modifier Letter Right Half Ring",''
+"02BF","\u02BF","ʿ","703",'',"Modifier Letter Left Half Ring",''
+"02C8","\u02C8","ˈ","712",'',"Modifier Letter Vertical Line",''
+"02C9","\u02C9","ˉ","713",'',"Modifier Letter Macron","0361"
+"02CA","\u02CA","ˊ","714",'',"Modifier Letter Acute Accent",''
+"02CB","\u02CB","ˋ","715",'',"Modifier Letter Grave Accent",''
+"02CC","\u02CC","ˌ","716",'',"Modifier Letter Low Vertical Line",''
+"02CD","\u02CD","ˍ","717",'',"Modifier Letter Low Macron",''
+"02CE","\u02CE","ˎ","718",'',"Modifier Letter Low Grave Accent",''
+"02CF","\u02CF","ˏ","719",'',"Modifier Letter Low Acute Accent",''
+"02DC","\u02DC","˜","732",'',"Small Tilde","0367"
+"02DD","\u02DD","˝","733",'',"Double Acute Accent","0368"
+"02EE","\u02EE","ˮ","750",'',"Modifier Letter Double Apostrophe",''
+"02F5","\u02F5","˵","757",'',"Modifier Letter Middle Double Grave Accent",''
+"2013","\u2013","–","0903",'',"En dash",''
+"2014","\u2014","—","0904",'',"Em dash",''
+"2015","\u2015","―","0905",'',"Horizontal bar",''
+"2018","\u2018","‘","0907",'',"Left single quotation mark",''
+"2019","\u2019","’","0908",'',"Right single quotation mark",''
+"201B","\u201B","‛","0910",'',"Single high-reversed-9 quotation mark",''
+"201C","\u201C","“","0911",'',"Left double quotation mark",''
+"201D","\u201D","”","0912",'',"Right double quotation mark",''
+"2022","\u2022","•","0916",'',"Bullet",''
+"200B","\u200B",'',"0420","&#8204;","ZERO WIDTH NON-JOINER","<ZWNJ>"
+"200C","\u200C",'',"0420","&#8204;","ZERO WIDTH NON-JOINER","<ZWNJ>"
+"200D","\u200D",'',"0420","&#8205;","ZERO WIDTH JOINER","<ZWJ>"
+"FEFF","\uFEFF",'',"0420","&#65279;","ZERO WIDTH NO-BREAK SPACE","<ZWNBSP>"
+"2028","\u2028",'',"0420","&#8232;","LINE SEPARATOR","<LS>"
+"2029","\u2029",'',"0420","&#8233;","PARAGRAPH SEPARATOR","<PS>"
+"0085","\u0085",'',"133","&#x0085;","next line","<control-0085>"
+"1680","\u1680",'',"5760","&#5760;","ogham space mark",''
+"180E","\u180E",'',"6158","&#6158;","mongolian vowel separator",''
+"2000","\u2000",'',"8192","&#8192;","en quad",''
+"2001","\u2001",'',"8193","&#8193;","em quad",''
+"2002","\u2002",'',"8194","&#8194;","en space",''
+"2003","\u2003",'',"8195","&#8195;","em space",''
+"2004","\u2004",'',"8196","&#8196;","three-per-em space",''
+"2005","\u2005",'',"8197","&#8197;","four-per-em space",''
+"2006","\u2006",'',"8198","&#8198;","six-per-em space",''
+"2007","\u2007",'',"8199","&#8199;","figure space",''
+"2008","\u2008",'',"8200","&#8200;","punctuation space",''
+"2009","\u2009",'',"8201","&#8201;","thin space",''
+"200A","\u200A",'',"8202","&#8202;","hair space",''
+"202F","\u202F",'',"8239","&#8239;","narrow no-break space",''
+"205F","\u205F",'',"8287","&#8287;","medium mathematical space",''
+"2060","\u2060",'',"8288","&#8288;","word joiner",''
+"3000","\u3000",'',"12288","&#12288;","ideographic space",''
