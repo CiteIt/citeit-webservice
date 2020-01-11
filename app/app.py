@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -7,13 +7,14 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-#import remote_pdb
 from flask import Flask
 from flask import request
 from flask import jsonify
 from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
-from lib.citeit_quote_context.url import URL    # lookup quotes
+from lib.citeit_quote_context.url import URL
+from lib.citeit_quote_context.canonical_url import Canonical_URL
+import urllib3
 import settings
 import boto3
 import json
@@ -22,9 +23,9 @@ import os
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 app = Flask(__name__)
@@ -118,6 +119,18 @@ def post_url():
             print(c.data['sha256'], ' ', c.data['citing_quote'])
 
     return jsonify(saved_citations)
+
+
+@app.route('/normalize-url', methods=['GET'])
+def normalize_url():
+    # Lookup the Canonical URL of a page
+    url = request.args.get('url', '')
+    http = urllib3.PoolManager()
+    r = http.request('GET', url)
+    html = r.data
+    canonical_url = Canonical_URL(html, url)
+    return canonical_url.citeit_url()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)

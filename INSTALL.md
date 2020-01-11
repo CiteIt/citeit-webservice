@@ -1,11 +1,10 @@
-Instructions on Installing the CiteIt Flask project
-====================================================
+# Instructions on Installing the CiteIt Flask project
 
   * install python 3.x
   * http://docs.python-guide.org/en/latest/starting/installation/
 
   * The Pip package manager should be installed with Python
-From the command line:
+	From the command line:
 
   * You can use pip to install the required python libraries:
     * pip install vitualenv
@@ -24,23 +23,31 @@ From the command line:
     * pip install -r requirements.txt
     * pip install 'requests[security]'
 
+### Flask Configure:
 
-Flask Local Setup
-=====================
+  * cd app/
 
-  export FLASK_APP=app
-  flask run
-
-
-Docker Setup:
-====================
+  * cp settings-default.py settings.py
+  (populate settings.py with own passwords)
 
 
+### Flask Run
+
+  * export FLASK_APP=app.py
+
+  * set FLASK_RUN_PORT=80
+
+  * python3 -m flask run --host=0.0.0.0 --port=80
+
+### Docker Setup:
+
+  * docker build -t citeit_webservice:latest .
+
+  * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
 
 
+# Optional Tools:
 
-Optional Tools:
-==================
 If you don't already have your own tool preferences, here's a few ideas
 to get you started:
 

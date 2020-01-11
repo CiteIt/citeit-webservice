@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -22,9 +22,9 @@ HASH_ALGORITHM = 'sha256'
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 class Quote:
@@ -73,6 +73,7 @@ class Quote:
 
     def citing_quote(self):
         return html_to_text(self.citing_quote_input)
+
 
     def citing_url(self):
         return self.citing_url_input
