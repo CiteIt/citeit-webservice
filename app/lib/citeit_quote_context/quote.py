@@ -9,10 +9,12 @@
 
 from lib.citeit_quote_context.quote_context import QuoteContext
 from lib.citeit_quote_context.document import Document
-from lib.citeit_quote_context.text_convert import TextConvert
+from lib.citeit_quote_context.text_convert import escape_text
+
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.canonical_url import url_without_protocol
 from lib.citeit_quote_context.text_convert import html_to_text
+from lib.citeit_quote_context.text_convert import escape_url
 
 from functools import lru_cache
 import hashlib
@@ -166,17 +168,14 @@ class Quote:
             throw off the hash
         """
 
-        citing_quote = self.citing_quote()
-        citing_quote = html_to_text(citing_quote)
-        citing_quote = TextConvert(citing_quote).escape()
-
-        citing_url = self.citing_url_canonical()
-        cited_url = self.cited_url()
+        citing_quote = escape_text(self.citing_quote())
+        citing_url = escape_url(self.citing_url_canonical())
+        cited_url = escape_url(self.cited_url())
 
         return ''.join([
-            citing_quote, '|',
+                    citing_quote, '|',
                     url_without_protocol(citing_url), '|',
-                    url_without_protocol(cited_url)  # future: replace with: self.cited_url_canonical ?
+                    url_without_protocol(cited_url)   # future: replace with: self.cited_url_canonical ?
                 ])
 
     def hash(self):
@@ -208,6 +207,7 @@ class Quote:
         """
 
         data_dict = {
+            'haskey': self.hashkey(),
             'sha256': self.hash(),
             'citing_quote': self.citing_quote(),
             'citing_url': self.citing_url(),  #  may be different from canonical
@@ -217,8 +217,6 @@ class Quote:
         }
 
         ######### LEFT OFF ##########
-
-
 
 
         # Set text and raw values equal to user-supplied values, or look up

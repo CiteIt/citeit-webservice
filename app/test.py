@@ -11,7 +11,6 @@
 
 from lib.citeit_quote_context.tests.quote_hash_match import QuoteHashTest
 from lib.citeit_quote_context.url import URL
-from lib.citeit_quote_context.text_convert import TextConvert
 from lib.citeit_quote_context.text_convert import html_to_text
 from lib.citeit_quote_context.text_convert import levenshtein_distance
 from lib.citeit_quote_context.text_convert import show_diff
@@ -53,7 +52,7 @@ for row_num, row in enumerate(reader):
             citing_quote = quote['citing_quote']
             citing_quote_original = citing_quote
             citing_quote = html_to_text(citing_quote)
-            citing_quote = TextConvert(citing_quote).escape()
+            citing_quote = escape_text(citing_quote)
 
         q = QuoteHashTest(
             quote['citing_quote'], # excerpt from citing document

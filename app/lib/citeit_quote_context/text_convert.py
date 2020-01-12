@@ -28,21 +28,30 @@ class TextConvert:
         self.str = str  # page's html, containing potential link, meta tags
 
     def escape(self):
-        return escape_text(str)
+        return escape_text(self.str)
+
+    def escape_url(self):
+        return escape_url(self.str)
+
+
+def html_to_text(html_str):
+    soup = BeautifulSoup(html_str, 'html.parser')
+    return soup.get_text()
 
 
 def escape_text(str):
     """Remove characters from the string"""
     str_return = ''
-    for char in self.str:
+    for char in str:
         if (ord(char) not in settings.TEXT_ESCAPE_CODE_POINTS):
             str_return = str_return + char
     return str_return
 
+
 def escape_url(str):
     """Remove characters from the string"""
     str_return = ''
-    for char in self.str:
+    for char in str:
         if (ord(char) not in settings.URL_ESCAPE_CODE_POINTS):
             str_return = str_return + char
     return str_return
@@ -103,8 +112,3 @@ def show_diff(text, n_text):
             output.append(seqm.b[b0:b1])
 
     return ''.join(output)
-
-
-def html_to_text(html_str):
-    soup = BeautifulSoup(html_str, 'html.parser')
-    return soup.get_text()
