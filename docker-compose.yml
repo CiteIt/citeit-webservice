@@ -1,0 +1,22 @@
+version: '0.5'
+services:
+  webservice:
+    image: citeit/citeit_webservice
+    restart: always
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      AMAZON_ACCESS_KEY: 'secret'
+      AMAZON_SECRET_KEY: 'secret'
+      AMAZON_S3_BUCKET: 'read.citeit.net'
+      AMAZON_S3_ENDPOINT: 's3.amazonaws.com'
+      AMAZON_REGION_NAME: 'us-east-1'
+      VERSION_NUM: 0.3
+      JSON_FILE_PATH: '/citeit/json/quote/sha256/0.3/'
+      FLASK_RUN_PORT: 80
+      FLASK_APP: app.py
+      PATH: /citeit/app:$PATH
+
+    env_file:
+      - ./citeit.env

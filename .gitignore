@@ -2,14 +2,14 @@ venv/
 *.pyc
 
 app/settings.py
-json/quote/sha256/*
+app/settings_secret.py
+citeit.env
 
-private-settings.json
+json/quote/sha256/*
+*.DS_Store
 
 .idea/* 
 .idea/codeStyles/codeStyleConfig.xml
 .idea/inspectionProfiles/Project_Default.xml
 aws_policy.json
-zappa_settings.json
 
-static/Kuhn.pdf

@@ -50,9 +50,9 @@ class Document:
             headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1;'
                        ' WOW64; rv:57.0) Gecko/20100101 Firefox/57.0'}
             r = requests.get(url, headers=headers, verify=False)
-            print('Downloaded ' + url)
+            # print('Downloaded ' + url)
             self.request_stop = datetime.now()
-            print("Encoding: %s" % r.encoding )
+            # print("Encoding: %s" % r.encoding )
             self.increment_num_downloads()
 
             text = r.text

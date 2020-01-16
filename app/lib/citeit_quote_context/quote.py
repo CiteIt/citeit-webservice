@@ -98,7 +98,7 @@ class Quote:
             If citing text was passed in to function, use it
             Otherwise look it up using Document class
         """
-        citing_text = self.citing_text_input
+        citing_text = html_to_text(self.citing_text_input)
         if not citing_text:
             if self.citing_doc():
                 citing_text = self.citing_doc().text()
@@ -165,14 +165,12 @@ class Quote:
             throw off the hash
         """
 
-        # soup = BeautifulSoup(self.citing_quote, "html.parser")
-        # citing_quote = soup.get_text()
-
         citing_quote = self.citing_quote()
+        citing_quote = html_to_text(citing_quote)
         citing_quote = TextConvert(citing_quote).escape()
+
         citing_url = self.citing_url_canonical()
         cited_url = self.cited_url()
-
 
         return ''.join([
             citing_quote, '|',
