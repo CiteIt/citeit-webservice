@@ -10,6 +10,7 @@
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from bs4 import BeautifulSoup
 from functools import lru_cache
+import certifi
 import requests
 from datetime import datetime
 import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/

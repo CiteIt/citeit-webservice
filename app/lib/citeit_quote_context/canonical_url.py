@@ -80,9 +80,14 @@ class Canonical_URL:
 
 def url_without_protocol(url):
     """
-    remove https://
+    Remove: http(s):// and trailing slash
+    Before: https://www.example.com/blog/first-post
+    After:  www.example.com/blog/first-postj
     """
 
+    url_without_trailing_slash = url.strip("/")
+
     rec = re.compile(r"https?://")
-    url_without_protocol = rec.sub('', url).strip().strip('/')
+    url_without_protocol = rec.sub('', url_without_trailing_slash).strip()
+
     return url_without_protocol

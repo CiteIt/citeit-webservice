@@ -169,7 +169,7 @@ class Quote:
         """
 
         citing_quote = escape_text(self.citing_quote())
-        citing_url = escape_url(self.citing_url_canonical())
+        citing_url = escape_url(self.citing_url())  # escape_url(self.citing_url_canonical())
         cited_url = escape_url(self.cited_url())
 
         return ''.join([
