@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -12,9 +12,9 @@ import re
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 class Canonical_URL:
@@ -74,11 +74,20 @@ class Canonical_URL:
             citeit_url = re.sub(r"/#.*$/", "", self.url)
 
         # (4) Remove the protocol (http:// or https://)
-        return  url_without_protocol(citeit_url)
+        return  url_without_protocol(citeit_url.strip())
+        #return  url_without_protocol('abcde')
 
 
 def url_without_protocol(url):
     """
-    remove https://
+    Remove: http(s):// and trailing slash
+    Before: https://www.example.com/blog/first-post
+    After:  www.example.com/blog/first-postj
     """
-    return re.sub(r"/^(https?:|)\/\//", "", url)
+
+    url_without_trailing_slash = url.strip("/")
+
+    rec = re.compile(r"https?://")
+    url_without_protocol = rec.sub('', url_without_trailing_slash).strip()
+
+    return url_without_protocol

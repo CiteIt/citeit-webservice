@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -10,6 +10,7 @@
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from bs4 import BeautifulSoup
 from functools import lru_cache
+import certifi
 import requests
 from datetime import datetime
 import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/
@@ -17,9 +18,9 @@ import re
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 class Document:
@@ -47,8 +48,9 @@ class Document:
 
         try:
             # Use a User Agent to simulate what a Firefox user would see
-            headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1;'
-                       ' WOW64; rv:57.0) Gecko/20100101 Firefox/57.0'}
+            headers = {'user-agent':'Mozilla / 5.0(Windows NT 6.1;'
+                       ' WOW64; rv: 54.0) Gecko/20100101 Firefox/71.0'}
+
             r = requests.get(url, headers=headers, verify=False)
             # print('Downloaded ' + url)
             self.request_stop = datetime.now()

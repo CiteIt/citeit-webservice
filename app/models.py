@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:

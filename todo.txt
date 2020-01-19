@@ -6,7 +6,7 @@ x Prune requirements Dependencies
 x Test citeit-webservice on Flask, Docker
 x Test List of URL Hashes
 
-  update citeit-wordpress to include lib/jquery
+x  update citeit-wordpress to include lib/jquery
 
   Update Demo Pages:
   	Al Gore/Sarah Palin
@@ -18,7 +18,10 @@ x Test List of URL Hashes
   Create ReadTheDocs documentation
   Create demo video
 
+  Compress JSON with Gzip.
+  Add Gzip and Brotli compression to Nginx
+
+
   Update citeit-webservice: make AWS upload optional + postgres optional
 
-  
   

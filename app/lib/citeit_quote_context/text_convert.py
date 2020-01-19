@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -9,48 +9,60 @@
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-_copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+_copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 from bs4 import BeautifulSoup
 import difflib
+import settings
 
 
 class TextConvert:
-
+    """ Remove the following characters from a string.
+        This is often used the normalize the Quote Hash:
+            escape(quote)|escape_url(citing)escape_url(cited)
+    """
     def __init__(self, str, url=None):
         self.str = str  # page's html, containing potential link, meta tags
 
     def escape(self):
-        """ Remove the following characters from a string."""
+        return escape_text(self.str)
 
-        txt = self.str
+    def escape_url(self):
+        return escape_url(self.str)
 
-        replace_text = [' ', '\n', 'â€™', ',', '.', '-', '–','-','-', '—', ':', '/', '!', '`', '~', '^', "’"
-            , chr(34), chr(39), ";"
-            , '&nbsp', '\xa0', '&#8217;'
-            , '&#169;', '&copy;', '&#174;'
-            , '&reg;', '&#8364;', '&euro;', '&#8482;', '&trade;'
-            , '&lsquo;', '&rsquo;', '&sbquo;', '&ldquo;', '&rdquo;', '&bdquo;'
-            , '&#34;', '&quot;', '&#38;', '&amp;', '&#39;', '&#163;', '&pound;'
-            , '&#165;', '&yen;', '&#168;', '&uml;', '&die;', '&#169;', '&copy;'
-            , '\u201c', '“', '”', "‘", "’", '’'
-            , '&#8217;', '&#8230;',
-        ]
 
-        for t in replace_text:
-            txt = txt.replace(t, '')
+def html_to_text(html_str):
+    soup = BeautifulSoup(html_str, 'html.parser')
+    return soup.get_text()
 
-        return txt
+
+def escape_text(str):
+    """Remove characters from the string"""
+    str_return = ''
+    for char in str:
+        if (ord(char) not in settings.TEXT_ESCAPE_CODE_POINTS):
+            str_return = str_return + char
+    return str_return
+
+
+def escape_url(str):
+    """Remove characters from the string"""
+    str_return = ''
+    for char in str:
+        if (ord(char) not in settings.URL_ESCAPE_CODE_POINTS):
+            str_return = str_return + char
+    return str_return
+
 
 def levenshtein_distance(word1, word2):
     """
-    https://en.wikipedia.org/wiki/Levenshtein_distance
-    :param word1:
-    :param word2:
-    :return:
+    Credit: https://en.wikipedia.org/wiki/Levenshtein_distance
+        :param word1:
+        :param word2:
+        :return:
     """
     word2 = word2.lower()
     word1 = word1.lower()
@@ -81,12 +93,12 @@ def levenshtein_distance(word1, word2):
 
 def show_diff(text, n_text):
     """
-    http://stackoverflow.com/a/788780
-    Unify operations between two compared strings seqm is a difflib.
-    SequenceMatcher instance whose a & b are strings
+    Credit: http://stackoverflow.com/a/788780
+        Unify operations between two compared strings seqm is a difflib.
+        SequenceMatcher instance whose a & b are strings
     """
     seqm = difflib.SequenceMatcher(None, text, n_text)
-    output= []
+    output = []
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
 
         if opcode == 'equal':
@@ -100,8 +112,3 @@ def show_diff(text, n_text):
             output.append(seqm.b[b0:b1])
 
     return ''.join(output)
-
-
-def html_to_text(html_str):
-    soup = BeautifulSoup(html_str, 'html.parser')
-    return soup.get_text()

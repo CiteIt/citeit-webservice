@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015-2019 Tim Langeman and contributors
+# Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
 # This library is part of the CiteIt project:
@@ -11,7 +11,7 @@
 
 from lib.citeit_quote_context.quote import Quote
 from lib.citeit_quote_context.url import URL
-from lib.citeit_quote_context.text_convert import TextConvert
+from lib.citeit_quote_context.text_convert import escape_text
 from lib.citeit_quote_context.text_convert import html_to_text
 from lib.citeit_quote_context.text_convert import levenshtein_distance
 from lib.citeit_quote_context.text_convert import show_diff
@@ -22,9 +22,9 @@ import requests
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2019 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.3"
+__version__ = "0.4"
 
 
 class QuoteHashTest:
@@ -45,7 +45,7 @@ class QuoteHashTest:
             cited_url = quote['cited_url']
             citing_quote = quote['citing_quote']
             citing_quote = html_to_text(citing_quote)
-            citing_quote = TextConvert(citing_quote).escape()
+            citing_quote = escape_text(citing_quote)
 
         self.citing_quote = citing_quote
         self.citing_url = citing_url

@@ -1,0 +1,113 @@
+Code, Glyph, Decimal, HTML, Description, #
+U+0000,  , 	0,	      , Null character,	NUL
+U+0001,  , 	1,	      , Start of Heading,	SOH
+U+0002,  , 	2,	      , Start of Text,	STX
+U+0003,  , 	3,	      , End-of-text character, ETX
+U+0004,  , 	4,	      , End-of-transmission character, EOT
+U+0005,  , 	5,	      , Enquiry character, ENQ
+U+0006,  , 	6,	      , Acknowledge character, ACK
+U+0007,  , 	7,	      , Bell character, BEL
+U+0008,	 ,  8,	      , Backspace, BS
+U+0009,	 ,  9,	      , Horizontal tab, HT
+U+000A,	 ,  10,	      , Line feed, LF
+U+000B,	 ,  11,	      , Vertical tab, VT
+U+000C,	 ,  12,	      , Form feed, FF
+U+000D,	 ,  13,	      , Carriage return, CR
+U+0020,	 ,	32,	      , Space, 0001
+U+0021,	!,	33,	      , Exclamation mark, 0002
+U+0022,	",	34,	      , Quotation mark, 0003
+U+0023,	#,	35,	      , Number sign\, Hashtag\, Octothorpe\, Sharp, 0004
+U+0024,	$,	36,	      , Dollar sign, 0005
+U+0025,	%,	37,	      , Percent sign, 0006
+U+0026,	&,	38,	      , Ampersand, 0007
+U+0027,	',	39,	      , Apostrophe, 0008
+U+0028,	(,	40,	      , Left parenthesis, 0009
+U+0029,	),	41,	      , Right parenthesis, 0010
+U+002A,	*,	42,	      , Asterisk, 0011
+U+002B,	+,	43,	      , Plus sign, 0012
+U+002C,	,,	44,	      , Comma, 0013
+U+002D,	-,	45,	      , Hyphen-minus, 0014
+U+002E,	.,	46,	      , Full stop, 0015
+U+002F,	/,	47,	      , Slash (Solidus), 0016
+U+003A,	:,	58,	      , Colon, 0027
+U+003B,	;,	59,	      , Semicolon, 0028
+U+005B,	[,	91,	      , Left Square Bracket, 0060
+U+005C,	\,	92,	      , Backslash, 0061
+U+005D,	],	93,	      , Right Square Bracket, 0062
+U+005E,	^,	94,	      , Circumflex accent, 0063
+U+005F,	_,	95,	      , Low line, 0064
+U+0060,	`,	96,	      , Grave accent, 0065
+U+007B,	{,	123,      , Left Curly Bracket, 0092
+U+007C,	|,	124,      , Vertical bar, 0093
+U+007D,	},	125,      , Right Curly Bracket, 0094
+U+007E,	~,	126,      , Tilde, 0095
+U+00A0,	 ,	0160,	&nbsp;,	Non-breaking space,	0096
+U+00A1,	¡,	0161,	&iexcl;, Inverted Exclamation Mark, 0097
+U+00A2,	¢,	0162,	&cent;, Cent sign, 0098
+U+00A3,	£,	0163,	&pound;,	Pound sign, 0099
+U+00A4,	¤,	0164,	&curren;,	Currency sign, 0100
+U+00A5,	¥,	0165,	&yen;, Yen sign, 0101
+U+00A6,	¦,	0166,	&brvbar;, Broken bar, 0102
+U+00A7,	§,	0167,	&sect;, Section sign, 0103
+U+00A8,	¨,	0168,	&uml;, Diaeresis (Umlaut), 0104
+U+00A9,	©,	0169,	&copy;, Copyright sign, 0105
+U+00AA,	ª,	0170,	&ordf;, Feminine Ordinal Indicator, 0106
+U+00AB,	«,	0171,	&laquo;, Left-pointing double angle quotation mark, 0107
+U+00AC,	¬,	0172,	&not;, Not sign, 0108
+U+00AD,	,	0173,	&shy;, Soft hyphen, 0109
+U+00AE,	®,	0174,	&reg;, Registered sign, 0110
+U+00AF,	¯,	0175,	&macr;, macron, 0111
+U+00B0,	°,	0176,	&deg;, Degree symbol, 0112
+U+00B1,	±,	0177,	&plusmn;, Plus-minus sign, 0113
+U+00B2,	²,	0178,	&sup2;, Superscript two, 0114
+U+00B3,	³,	0179,	&sup3;, Superscript three, 0115
+U+00B4,	´,	0180,	&acute;, Acute accent, 0116
+U+00B5,	µ,	0181,	&micro;, Micro sign, 0117
+U+00B6,	¶,	0182,	&para;, Pilcrow sign, 0118
+U+00B7,	·,	0183,	&middot;, Middle dot, 0119
+U+00B8,	¸,	0184,	&cedil;, Cedilla, 0120
+U+00B9,	¹,	0185,	&sup1;, Superscript one, 0121
+U+00BA,	º,	0186,	&ordm;, Masculine ordinal indicator, 0122
+U+00BB,	»,	0187,	&raquo;, Right-pointing double angle quotation mark, 0123
+U+00BC,	¼,	0188,	&frac14;, Vulgar fraction one quarter, 0124
+U+00BD,	½,	0189,	&frac12;, Vulgar fraction one half, 0125
+U+00BE,	¾,	0190,	&frac34;, Vulgar fraction three quarters, 0126
+U+00BF,	¿,	0191,	&iquest;, Inverted Question Mark, 0127
+U+02BB,	ʻ,	699,	   , Modifier Letter Turned Comma, 0356, in Sami
+U+02BC,	ʼ,	700,	   , Modifier Letter Apostrophe, 0357, in ISO/IEC 8859-7
+U+02BD,	ʽ,	701,	   , Modifier Letter Reversed Comma, 0358
+U+02BE,	ʾ,	702,	   , Modifier Letter Right Half Ring,	·
+U+02BF,	ʿ,	703,	   , Modifier Letter Left Half Ring,
+U+02C8,	ˈ,	712,	   , Modifier Letter Vertical Line,	·
+U+02C9,	ˉ,	713,	   , Modifier Letter Macron	0361, in WGL4
+U+02CA,	ˊ,	714,	   , Modifier Letter Acute Accent, ·
+U+02CB,	ˋ,	715,	   , Modifier Letter Grave Accent
+U+02CC,	ˌ,	716,	   , Modifier Letter Low Vertical Line
+U+02CD,	ˍ,	717,	   , Modifier Letter Low Macron
+U+02CE,	ˎ,	718,	   , Modifier Letter Low Grave Accent
+U+02CF,	ˏ,	719,	   , Modifier Letter Low Acute Accent
+U+02EE,	ˮ,	750,	   , Modifier Letter Double Apostrophe	
+U+02F5,	˵,	757,	   , Modifier Letter Middle Double Grave Accent
+U+02F6,	˶,	758,	   , Modifier Letter Middle Double Acute Accent
+U+02F7,	˷,	759,	   , Modifier Letter Low Tilde
+U+02F8,	˸,	760,	   , Modifier Letter Raised Colon
+U+2013,	–,	0903,	   , En dash	
+U+2014,	—,  0904,	   , Em dash	
+U+2015,	―,	0905,	   , Horizontal bar	
+U+2017,	‗,	0906,	   , Double low line	
+U+2018,	‘,	0907,	   , Left single quotation mark	
+U+2019,	’,	0908,	   , Right single quotation mark	
+U+201A,	‚,	0909,	   , Single low-9 quotation mark	
+U+201B,	‛,	0910,	   , Single high-reversed-9 quotation mark	
+U+201C,	“,	0911,	   , Left double quotation mark	
+U+201D,	”,	0912,	   , Right double quotation mark	
+U+201E,	„,	0913,	   , Double low-9 quotation mark	
+U+2022,	•,	0916,	   , Bullet	
+U+2026,	…,	0917,	   , Horizontal ellipsis	
+U+2030,	‰,	0918,	   , Per mille sign	
+U+2032,	′,	0919,	   , Prime	
+U+2033,	″,	0920,	   , Double prime	
+U+2039,	‹,	0921,	   , Single left-pointing angle quotation mark	
+U+203A,	›,	0922,	   , Single right-pointing angle quotation mark	
+U+203C,	‼,	0923,	   , Double exclamation mark	
+U+203E,	‾,	0924,	   , Overline
