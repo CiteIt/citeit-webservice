@@ -13,8 +13,8 @@ from bs4 import BeautifulSoup
 from functools import lru_cache
 from multiprocessing import Pool
 import time
+import settings
 
-NUM_DOWNLOAD_PROCESSES = 30
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -119,7 +119,7 @@ class URL:
         """
         result_list = []
         citations_list_dict = self.citations_list_dict()
-        pool = Pool(processes=NUM_DOWNLOAD_PROCESSES)
+        pool = Pool(processes=settings.NUM_DOWNLOAD_PROCESSES)
         #try:
         result_list = pool.map(load_quote_data, citations_list_dict)
         #except ValueError:
@@ -144,5 +144,6 @@ def load_quote_data(quote_keys):
                  quote_keys['citing_text'],  # optional: caching
                  quote_keys['citing_raw']   # optional: caching
              )
+
     return quote.data()
 

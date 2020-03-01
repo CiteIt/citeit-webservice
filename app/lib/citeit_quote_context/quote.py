@@ -207,7 +207,6 @@ class Quote:
         """
 
         data_dict = {
-            'haskey': self.hashkey(),
             'sha256': self.hash(),
             'citing_quote': self.citing_quote(),
             'citing_url': self.citing_url(),  #  may be different from canonical
@@ -238,7 +237,7 @@ class Quote:
             'quote_start_position', 'quote_end_position',
             'context_start_position', 'context_end_position',
             'quote_length',
-            # 'encoding', 'encoding_confidence', 'language'
+            #'encoding', 'encoding_confidence', 'language'
         ]
         for field in quote_context_fields:
             citing_field = ''.join(['citing_', field])
@@ -250,6 +249,7 @@ class Quote:
         # Stop Elapsed Timer
         elapsed_time = time.time() - self.start_time
         data_dict['create_elapsed_time'] = format(elapsed_time, '.5f')
+        data_dict['hashkey'] = self.hashkey()
 
         # Don't return certain fields
         if not self.text_output:
@@ -268,6 +268,7 @@ class Quote:
                 'citing_context_start_position',
                 'cited_context_end_position', 'citing_context_end_position',
                 'create_elapsed_time',
+                'encoding', 'encoding_confidence', 'language'
             ]
             for excluded_field in excluded_fields:
                 data_dict.pop(excluded_field, None)
