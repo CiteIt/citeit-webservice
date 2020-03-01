@@ -83,7 +83,7 @@ def post_url():
             quote_json['citing_context_after'] = c.data['citing_context_after']
             quote_json['cited_context_after'] = c.data['cited_context_after']
             quote_json['cited_quote'] = c.data['cited_quote']
-
+            quote_json['hashkey'] = c.data['hashkey']
 
             # Save JSON to local file
             print("Saving Json locally ..")
@@ -116,7 +116,7 @@ def post_url():
 
             # Output simple summary
             saved_citations[c.data['sha256']] = c.data['citing_quote']
-            print(c.data['sha256'], ' ', c.data['citing_quote'])
+            print(c.data['sha256'], ' ', c.data['hashkey'], ' ', c.data['citing_quote'])
 
     return jsonify(saved_citations)
 
