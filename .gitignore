@@ -13,3 +13,4 @@ json/quote/sha256/*
 .idea/inspectionProfiles/Project_Default.xml
 aws_policy.json
 
+app/aws_settings.py
