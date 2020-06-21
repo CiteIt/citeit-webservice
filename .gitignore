@@ -4,6 +4,9 @@ venv/
 app/settings.py
 app/settings_secret.py
 citeit.env
+api.env
+
+docker-command.txt
 
 json/quote/sha256/*
 *.DS_Store

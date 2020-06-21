@@ -91,13 +91,13 @@ def post_url():
             json_file = json.dumps(quote_json)
             json_filename = ''.join([c.data['sha256'], '.json'])
             json_full_filepath = os.path.join(settings.JSON_FILE_PATH, json_filename)
-            print("Full Filepath: " + json_full_filepath)
+            print("Full Filepath x1: " + json_full_filepath)
             with open(json_full_filepath, 'w+') as f:
                 f.write(json_file)
 
             print("Saving Json to S3 ..")
             shard = json_filename[:2]
-            remote_path= ''.join(["quote/sha256/", str(settings.VERSION_NUM), "/", str(shard), "/", json_filename])
+            remote_path= ''.join(["quote/sha256/0.4/", str(shard), "/", json_filename])
             print("JSON Path: " + json_file)
             print("Remote path: " + remote_path)
 
