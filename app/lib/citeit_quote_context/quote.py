@@ -94,7 +94,7 @@ class Quote:
         if not citing_raw:
             if self.citing_doc():
                 citing_raw = self.citing_doc.raw()
-        return citing_raw
+                return citing_raw
 
     def citing_text(self):
         """ Get text-version of citing document:
@@ -172,10 +172,11 @@ class Quote:
         citing_url = escape_url(self.citing_url())  # escape_url(self.citing_url_canonical())
         cited_url = escape_url(self.cited_url())
 
+
         return ''.join([
-                    citing_quote, '|',
+                    citing_quote, '|',                         # https://stackoverflow.com/questions/22601291/how-do-i-unescape-a-unicode-escaped-string-in-python
                     url_without_protocol(citing_url), '|',
-                    url_without_protocol(cited_url)   # future: replace with: self.cited_url_canonical ?
+                    url_without_protocol(cited_url)            # future: replace with: self.cited_url_canonical ?
                 ])
 
     def hash(self):

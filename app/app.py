@@ -14,6 +14,7 @@ from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL
 from lib.citeit_quote_context.canonical_url import Canonical_URL
+from lib.citeit_quote_context.document import Document
 import urllib3
 import settings
 import boto3
@@ -130,6 +131,21 @@ def normalize_url():
     html = r.data
     canonical_url = Canonical_URL(html, url)
     return canonical_url.citeit_url()
+
+@app.route('/document/text-version', methods=['GET'])
+def document_text_version():
+    url = request.args.get('url', '')
+    d = Document(url)
+    return d.text()
+
+@app.route('/document/data', methods=['GET'])
+def document_data():
+    url = request.args.get('url', '')
+    verbose_view = request.args.get('verbose', True)
+    d = Document(url)
+    document_data = d.data(verbose_view=verbose_view)
+    return jsonify(document_data)
+
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@ from datetime import datetime
 import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
 
+
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
@@ -57,8 +58,8 @@ class Document:
             # print("Encoding: %s" % r.encoding )
             self.increment_num_downloads()
 
-            text = r.text
-            content = r.content
+            text = r.text          # unicode
+            content = r.content    # raw
             encoding = r.encoding
             error = ''
 
@@ -68,8 +69,9 @@ class Document:
             """ TODO: Add better error tracking """
             error = "document: HTTPError"
 
-        return  {   'text': text,
-                    'content': content,
+        return  {   'text': text,         # unicode
+                    'unicode': text,
+                    'content': content,   # raw
                     'encoding': encoding,
                     'error': error
                 }
@@ -132,7 +134,7 @@ class Document:
             This method returns the raw, unprocessed data, but
             it is cached for performance reasons, using @lru_cache
         """
-        raw = self.download(convert_to_unicode=False)
+        raw = self.download(convert_to_unicode=convert_to_unicode)
         if raw:
             return raw
         else:
@@ -142,7 +144,7 @@ class Document:
         """ Get html code, if doc_type = 'html' """
         html = ""
         if self.doc_type() == 'html':
-            html = self.raw()
+            html = self.download_resource()['unicode']   #self.raw()
         return html
 
     @lru_cache(maxsize=20)
@@ -153,7 +155,7 @@ class Document:
 
             Credit: http://pydoc.net/Python/pageinfo/0.40/pageinfo.pageinfo/
         """
-        return  Canonical_URL(self.text())
+        return  Canonical_URL(self.text()).canonical_url()
 
     def citeit_url(self):
         """ Use the canonical_url, if it exists.
@@ -172,17 +174,17 @@ class Document:
         data['canonical_url'] = self.canonical_url()
         data['citeit_url'] = self.citeit_url()
         data['doc_type'] = self.doc_type()
-        data['text'] = self.text()
-        data['raw'] = self.raw()
-        if (verbose_view):
-            encoding = self.encoding()
-            data['raw_original_encoding'] = self.raw(convert_to_unicode=False)
-            data['encoding'] = encoding['encoding']
-            data['language'] = encoding['language']
-            data['num_downloads'] = self.num_downloads
-            data['request_start'] = self.request_start
-            data['request_stop'] = self.request_stop
-            data['elapsed_time'] = self.elapsed_time()
+        #data['text'] = self.text()
+        #data['raw'] = self.raw()
+        #if (verbose_view):
+        #encoding = self.encoding()
+        #data['raw_original_encoding'] = self.raw(convert_to_unicode=False)
+        #data['encoding'] = encoding['encoding']
+        #data['language'] = encoding['language']
+        #data['num_downloads'] = self.num_downloads
+        #data['request_start'] = self.request_start
+        #data['request_stop'] = self.request_stop
+        #data['elapsed_time'] = self.elapsed_time()
         return data
 
     @lru_cache(maxsize=20)
@@ -190,11 +192,7 @@ class Document:
         """ Returns character-encoding for requested document
         """
         resource = self.download_resource()
-        if 'encoding' in resource:
-            return resource['encoding'].lower()
-
-        return ''
-
+        return resource['encoding'].lower()
 
     def request_start(self):
         """ When the Class was instantiated """
