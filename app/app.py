@@ -41,9 +41,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 def about():
     return 'Hello, This is the CiteIt.net api! version: ' + VERSION
 
-@app.route('/<string:url>', methods=['GET', 'POST'])
-@app.route('/v' + VERSION + '/url<string:url>', methods=['GET', 'POST'])
-def post_url(url):
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/v' + VERSION + '/url/', methods=['GET', 'POST'])
+def post_url():
     """
         Lookup citations referenced by specified url
         Find 500 characters before and after
@@ -56,16 +56,15 @@ def post_url(url):
     saved_citations = {}
 
 
-    """
     # GET URL Parameter
     if request.method == "POST":
         url_string = request.form.get('url', '')
     else:
         url_string = request.args.get('url', '')
-    """
+
 
     # Check if URL is of a valid format
-    parsed_url = parse.urlparse(url)
+    parsed_url = parse.urlparse(url_string)
     is_url = bool(parsed_url.scheme)
 
     # Lookup Citations for this URL and Save
