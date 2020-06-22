@@ -15,18 +15,21 @@ from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.document import Document
+from lib.citeit_quote_context.quote import Quote
 import urllib3
 import settings
 import boto3
 import json
 import os
 
+VERSION = "0.4"
+
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = "0.4"
+__version__ = VERSION
 
 
 app = Flask(__name__)
@@ -34,13 +37,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 
 
-@app.route('/hello')
-def hello_world(event, context):
-    return 'Hello, This is the CiteIt api!'
+@app.route('/about')
+def about():
+    return 'Hello, This is the CiteIt.net api! version: ' + VERSION
 
-
-@app.route('/', methods=['GET', 'POST'])
-def post_url():
+@app.route('/<string:url>', methods=['GET', 'POST'])
+@app.route('/v' + VERSION + '/url<string:url>', methods=['GET', 'POST'])
+def post_url(url):
     """
         Lookup citations referenced by specified url
         Find 500 characters before and after
@@ -48,18 +51,21 @@ def post_url():
         Save contextual data to database and
         Upload json file to cloud
 
-        USAGE: http://localhost:5000/?url=https://www.citeit.net/
+        USAGE: http://localhost:5000/v0.4/url?url=https://www.citeit.net/
     """
     saved_citations = {}
 
+
+    """
     # GET URL Parameter
     if request.method == "POST":
         url_string = request.form.get('url', '')
     else:
         url_string = request.args.get('url', '')
+    """
 
     # Check if URL is of a valid format
-    parsed_url = parse.urlparse(url_string)
+    parsed_url = parse.urlparse(url)
     is_url = bool(parsed_url.scheme)
 
     # Lookup Citations for this URL and Save
@@ -121,8 +127,29 @@ def post_url():
 
     return jsonify(saved_citations)
 
+@app.route('/v' + VERSION + '/url/hashkeys', methods=['GET'])
+def quote_hashkeys():
+    # Get hashkeys for every quote on a page:
 
-@app.route('/normalize-url', methods=['GET'])
+    citing_url = request.args.get('url', '')
+    url = URL(citing_url)
+    citations_list = url.citations_list_dict()
+    quotes = []
+
+    for quote in citations_list:
+        q = Quote(  quote['citing_quote'],
+                    quote['citing_url'],
+                    quote['cited_url']
+        )
+
+        citing_quote = q.citing_quote()
+        hashkey = q.hashkey()
+        quotes.append({citing_quote: hashkey})
+
+    return jsonify(quotes)
+
+
+@app.route('/v' + VERSION + '/url/canonical-url', methods=['GET'])
 def normalize_url():
     # Lookup the Canonical URL of a page
     url = request.args.get('url', '')
@@ -132,20 +159,20 @@ def normalize_url():
     canonical_url = Canonical_URL(html, url)
     return canonical_url.citeit_url()
 
-@app.route('/document/text-version', methods=['GET'])
+@app.route('/url/text-version', methods=['GET'])
+@app.route('/v' + VERSION + '/url/text-version', methods=['GET'])
 def document_text_version():
     url = request.args.get('url', '')
     d = Document(url)
     return d.text()
 
-@app.route('/document/data', methods=['GET'])
+@app.route('/v' + VERSION + '/url/meta-data', methods=['GET'])
 def document_data():
     url = request.args.get('url', '')
     verbose_view = request.args.get('verbose', True)
     d = Document(url)
     document_data = d.data(verbose_view=verbose_view)
     return jsonify(document_data)
-
 
 
 if __name__ == '__main__':

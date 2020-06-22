@@ -142,7 +142,7 @@ def load_quote_data(quote_keys):
                  quote_keys['citing_url'],
                  quote_keys['cited_url'],
                  quote_keys['citing_text'],  # optional: caching
-                 quote_keys['citing_raw']   # optional: caching
+                 quote_keys['citing_raw']    # optional: caching
              )
 
     return quote.data()
