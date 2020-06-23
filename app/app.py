@@ -55,14 +55,20 @@ def post_url():
 
         USAGE: http://localhost:5000/v0.4/url?url=https://www.citeit.net/
     """
-    saved_citations = {}
 
-
-    # GET URL Parameter
+    # GET URL Parameters
     if request.method == "POST":
         url_string = request.form.get('url', '')
+        format = request.form.get('format', '')
     else:
         url_string = request.args.get('url', '')
+        format = request.args.get('format', '')
+
+
+    if (format == 'list'):
+        saved_citations = []  # return full JSON list
+    else:
+        saved_citations = {}  # return summary dict: sha256: quote
 
 
     # Check if URL is of a valid format
@@ -122,9 +128,13 @@ def post_url():
 	        ExtraArgs={'ContentType':"application/json", 'ACL': "public-read"},
             )
 
-            # Output simple summary
-            saved_citations[c.data['sha256']] = c.data['citing_quote']
-            print(c.data['sha256'], ' ', c.data['hashkey'], ' ', c.data['citing_quote'])
+            if (format == 'list'):
+                saved_citations.append(quote_json)
+            else:
+                # Output simple summary:
+                saved_citations[c.data['sha256']] = c.data['citing_quote']
+                print(c.data['sha256'], ' ', c.data['hashkey'], ' ', c.data['citing_quote'])
+
 
     return jsonify(saved_citations)
 
