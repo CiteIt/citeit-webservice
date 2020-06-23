@@ -32,9 +32,11 @@ __license__ = "MIT"
 __version__ = VERSION
 
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 
 @app.route('/about')
@@ -141,22 +143,24 @@ def quote_hashkeys():
                     quote['cited_url']
         )
 
-        citing_quote = q.citing_quote()
+        citing_quote = quote['citing_quote']  #q.citing_quote()
         hashkey = q.hashkey()
         quotes.append({citing_quote: hashkey})
 
     return jsonify(quotes)
 
 
+
 @app.route('/v' + VERSION + '/url/canonical-url', methods=['GET'])
-def normalize_url():
+def canonical_url():
     # Lookup the Canonical URL of a page
     url = request.args.get('url', '')
     http = urllib3.PoolManager()
     r = http.request('GET', url)
     html = r.data
     canonical_url = Canonical_URL(html, url)
-    return canonical_url.citeit_url()
+    return  jsonify({url : canonical_url.citeit_url()})
+
 
 @app.route('/url/text-version', methods=['GET'])
 @app.route('/v' + VERSION + '/url/text-version', methods=['GET'])
@@ -166,12 +170,12 @@ def document_text_version():
     return d.text()
 
 @app.route('/v' + VERSION + '/url/meta-data', methods=['GET'])
-def document_data():
+def document_meta_data():
     url = request.args.get('url', '')
     verbose_view = request.args.get('verbose', True)
     d = Document(url)
     document_data = d.data(verbose_view=verbose_view)
-    return jsonify(document_data)
+    return  jsonify(document_data)
 
 
 if __name__ == '__main__':
