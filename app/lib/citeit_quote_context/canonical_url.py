@@ -75,7 +75,6 @@ class Canonical_URL:
 
         # (4) Remove the protocol (http:// or https://)
         return  url_without_protocol(citeit_url.strip())
-        #return  url_without_protocol('abcde')
 
 
 def url_without_protocol(url):

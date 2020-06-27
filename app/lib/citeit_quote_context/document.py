@@ -13,8 +13,10 @@ from functools import lru_cache
 import certifi
 import requests
 from datetime import datetime
+from langdetect import detect    # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
 import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
+
 
 
 __author__ = 'Tim Langeman'
@@ -61,7 +63,9 @@ class Document:
             text = r.text          # unicode
             content = r.content    # raw
             encoding = r.encoding
+            language = detect(r.text)  # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
             error = ''
+
 
         except requests.HTTPError:
             self.request_stop = datetime.now()
@@ -73,7 +77,8 @@ class Document:
                     'unicode': text,
                     'content': content,   # raw
                     'encoding': encoding,
-                    'error': error
+                    'error': error,
+                    'language': language
                 }
 
     @lru_cache(maxsize=20)
@@ -155,16 +160,25 @@ class Document:
 
             Credit: http://pydoc.net/Python/pageinfo/0.40/pageinfo.pageinfo/
         """
-        return  Canonical_URL(self.text()).canonical_url()
+
+        html = self.html()
+
+        return  Canonical_URL(html).canonical_url()
 
     def citeit_url(self):
         """ Use the canonical_url, if it exists.
             Otherwise, use the user-supplied url.
         """
-        if self.canonical_url():
-            return self.canonical_url()
+
+        citeit_url = Canonical_URL(self.html()).citeit_url()
+
+        if citeit_url:
+            return citeit_url
         else:
-            return self.url
+            return self.url_without_protocol()
+
+    def url_without_protocol(self):
+        return Canonical_URL(self.url).url_without_protocol()
 
     @lru_cache(maxsize=20)
     def data(self, verbose_view=False):
@@ -174,17 +188,19 @@ class Document:
         data['canonical_url'] = self.canonical_url()
         data['citeit_url'] = self.citeit_url()
         data['doc_type'] = self.doc_type()
-        #data['text'] = self.text()
-        #data['raw'] = self.raw()
-        #if (verbose_view):
-        #encoding = self.encoding()
-        #data['raw_original_encoding'] = self.raw(convert_to_unicode=False)
-        #data['encoding'] = encoding['encoding']
-        #data['language'] = encoding['language']
-        #data['num_downloads'] = self.num_downloads
-        #data['request_start'] = self.request_start
-        #data['request_stop'] = self.request_stop
-        #data['elapsed_time'] = self.elapsed_time()
+        data['language'] = self.language()
+
+        data['encoding'] = self.encoding()
+        data['request_start'] = self.request_start
+        data['request_stop'] = self.request_stop
+        data['elapsed_time'] = str(self.elapsed_time())
+        data['text'] = self.text()
+        data['raw'] = self.raw()
+
+        if (verbose_view):
+            data['raw_original_encoding'] = self.raw(convert_to_unicode=False)
+            data['num_downloads'] = self.num_downloads
+
         return data
 
     @lru_cache(maxsize=20)
@@ -193,6 +209,10 @@ class Document:
         """
         resource = self.download_resource()
         return resource['encoding'].lower()
+
+    def language(self):
+        resource = self.download_resource()
+        return resource['language']
 
     def request_start(self):
         """ When the Class was instantiated """

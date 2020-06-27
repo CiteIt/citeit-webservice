@@ -17,6 +17,7 @@ from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.quote import Quote
 import urllib3
+import hashlib
 import settings
 import boto3
 import json
@@ -138,14 +139,27 @@ def post_url():
 
     return jsonify(saved_citations)
 
+@app.route('/v' + VERSION + '/url/encoding', methods=['GET'])
+def url_encoding():
+
+    citing_url = request.args.get('url', '')
+    url = URL(citing_url)
+    return jsonify({'encoding': url.doc().encoding()})
+
+
 @app.route('/v' + VERSION + '/url/hashkeys', methods=['GET'])
 def quote_hashkeys():
-    # Get hashkeys for every quote on a page:
+    # Get hashkey for each quote of URL:
+    # separate by two "\n"
+
+    HASH_ALGORITHM = 'sha256'
 
     citing_url = request.args.get('url', '')
     url = URL(citing_url)
     citations_list = url.citations_list_dict()
     quotes = []
+    output = ''
+
 
     for quote in citations_list:
         q = Quote(  quote['citing_quote'],
@@ -155,9 +169,19 @@ def quote_hashkeys():
 
         citing_quote = quote['citing_quote']  #q.citing_quote()
         hashkey = q.hashkey()
-        quotes.append({citing_quote: hashkey})
+        quotes.append({citing_quote: quote['citing_text']})
 
-    return jsonify(quotes)
+        output = output + "\n\n" + hashkey
+
+
+    hash_method = getattr(hashlib, HASH_ALGORITHM)
+    hash_text = hashkey
+    encoding = url.doc().encoding()
+
+    #return hash_method(hash_text.encode(encoding)).hexdigest()
+
+
+    return output   # jsonify(quotes)
 
 
 
@@ -177,6 +201,7 @@ def canonical_url():
 def document_text_version():
     url = request.args.get('url', '')
     d = Document(url)
+
     return d.text()
 
 @app.route('/v' + VERSION + '/url/meta-data', methods=['GET'])
