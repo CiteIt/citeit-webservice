@@ -1,7 +1,6 @@
 venv/
 *.pyc
 
-app/settings.py
 app/settings_secret.py
 citeit.env
 api.env
