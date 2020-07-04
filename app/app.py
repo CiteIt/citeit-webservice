@@ -10,6 +10,7 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
+from flask import make_response
 from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL
@@ -23,15 +24,14 @@ import boto3
 import json
 import os
 
-VERSION = "0.4"
+WEBSERVICE_VERSION = "0.4"
 
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
-__version__ = VERSION
-
+__version__ = WEBSERVICE_VERSION
 
 
 app = Flask(__name__)
@@ -42,10 +42,10 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 @app.route('/about')
 def about():
-    return 'Hello, This is the CiteIt.net api! version: ' + VERSION
+    return 'Hello, This is the CiteIt.net api! version: ' + WEBSERVICE_VERSION
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/v' + VERSION + '/url/', methods=['GET', 'POST'])
+@app.route('/v' + WEBSERVICE_VERSION + '/url/', methods=['GET', 'POST'])
 def post_url():
     """
         Lookup citations referenced by specified url
@@ -139,7 +139,7 @@ def post_url():
 
     return jsonify(saved_citations)
 
-@app.route('/v' + VERSION + '/url/encoding', methods=['GET'])
+@app.route('/v' + WEBSERVICE_VERSION + '/url/encoding', methods=['GET'])
 def url_encoding():
 
     citing_url = request.args.get('url', '')
@@ -147,7 +147,7 @@ def url_encoding():
     return jsonify({'encoding': url.doc().encoding()})
 
 
-@app.route('/v' + VERSION + '/url/hashkeys', methods=['GET'])
+@app.route('/v' + WEBSERVICE_VERSION + '/url/hashkeys', methods=['GET'])
 def quote_hashkeys():
     # Get hashkey for each quote of URL:
     # separate by two "\n"
@@ -159,7 +159,6 @@ def quote_hashkeys():
     citations_list = url.citations_list_dict()
     quotes = []
     output = ''
-
 
     for quote in citations_list:
         q = Quote(  quote['citing_quote'],
@@ -173,19 +172,16 @@ def quote_hashkeys():
 
         output = output + "\n\n" + hashkey
 
-
     hash_method = getattr(hashlib, HASH_ALGORITHM)
     hash_text = hashkey
     encoding = url.doc().encoding()
 
     #return hash_method(hash_text.encode(encoding)).hexdigest()
 
-
     return output   # jsonify(quotes)
 
 
-
-@app.route('/v' + VERSION + '/url/canonical-url', methods=['GET'])
+@app.route('/v' + WEBSERVICE_VERSION + '/url/canonical-url', methods=['GET'])
 def canonical_url():
     # Lookup the Canonical URL of a page
     url = request.args.get('url', '')
@@ -197,14 +193,17 @@ def canonical_url():
 
 
 @app.route('/url/text-version', methods=['GET'])
-@app.route('/v' + VERSION + '/url/text-version', methods=['GET'])
+@app.route('/v' + WEBSERVICE_VERSION + '/url/text-version', methods=['GET'])
 def document_text_version():
     url = request.args.get('url', '')
     d = Document(url)
 
-    return d.text()
+    response = app.make_response(d.text())
+    response.mimetype = "text"
+    return response
 
-@app.route('/v' + VERSION + '/url/meta-data', methods=['GET'])
+
+@app.route('/v' + WEBSERVICE_VERSION + '/url/meta-data', methods=['GET'])
 def document_meta_data():
     url = request.args.get('url', '')
     verbose_view = request.args.get('verbose', True)

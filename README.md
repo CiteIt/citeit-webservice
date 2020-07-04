@@ -7,6 +7,9 @@ to **demonstrate the context of their quotations** by helping them display the
 ## View Demo: ##
 Demo site with video:
   * https://www.CiteIt.net/
+  
+Sample API Calls:
+  * https://www.citeit.net/sample-code/  
 
 ## Tools Used ##
   * **API Server**: [Python](https://www.python.org/) [Flask](http://flask.pocoo.org/) Server

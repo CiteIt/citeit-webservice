@@ -8,23 +8,30 @@
 # http://www.opensource.org/licenses/mit-license
 
 from lib.citeit_quote_context.canonical_url import Canonical_URL
-from bs4 import BeautifulSoup
-from functools import lru_cache
+from lib.citeit_quote_context.content_type import Content_Type
+from lib.citeit_quote_context.canonical_url import url_without_protocol
 
 import requests
 import urllib
-import pdftotext      # pdf that have digital text: easier to convert than ocr
-# import pytesseract  # ocr library for python
-# from pdf2image import convert_from_path
-# import glob
-# import timeit
+from urllib.parse import urlparse
+
+from bs4 import BeautifulSoup  # convert html > text
+
+from pdf2image import convert_from_path
+import pdftotext      # convert pdf > text without using ocr
+import pytesseract    # ocr library for python
+import glob
 
 from datetime import datetime
 from langdetect import detect    # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
-import ftfy     # Fix bad unicode:  http://ftfy.readthedocs.io/
+from functools import lru_cache
+import ftfy                      # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
 import os
+import timeit
 
+FOLDER_SEPARATOR = "%2"
+PDF_PREFIX = "../downloads/"
 
 
 __author__ = 'Tim Langeman'
@@ -32,6 +39,11 @@ __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
 __version__ = "0.4"
+
+HEADERS = {
+   'user-agent': 'Mozilla / 5.0(Windows NT 6.1;'
+   ' WOW64; rv: 54.0) Gecko/20100101 Firefox/71.0'
+}
 
 
 class Document:
@@ -48,32 +60,76 @@ class Document:
         self.num_downloads = 0  # count number of times the source is downloaded
         self.request_start = datetime.now()  # time how long request takes
         self.request_stop = None  # Datetime of last download
-        self.char_encoding = ''   # character encoding of document, returned by requests library
 
-    #def url(self):
-    #    return self.url
+        self.unicode = ''
+        self.content = ''      # raw (binary)
+        self.encoding = ''     # character encoding of document, returned by requests library
+        self.error = ''
+        self.language = ''
+        self.content_type = ''
 
+        self.request_dict = {
+            'text': '',        # unicode
+            'unicode': '',
+            'content': '',     # raw
+            'encoding': '',
+            'error':  '',
+            'language': '',
+            'content_type': ''
+        }
+
+    def url(self):
+        return self.url
+
+    @lru_cache(maxsize=500)
     def download_resource(self):
-        error = ''
-        url = self.url
+
+        # Was this file already downloaded?
+        if (len(self.content_type) >= 1) :
+            print("ALREADY DOWNLOADED.")
+            return self.request_dict
 
         try:
-            # Use a User Agent to simulate what a Firefox user would see
-            headers = {'user-agent':'Mozilla / 5.0(Windows NT 6.1;'
-                       ' WOW64; rv: 54.0) Gecko/20100101 Firefox/71.0'}
-
-            r = requests.get(url, headers=headers, verify=False)
-            # print('Downloaded ' + url)
-            self.request_stop = datetime.now()
-            # print("Encoding: %s" % r.encoding )
             self.increment_num_downloads()
-
-            text = r.text          # unicode
-            content = r.content    # raw
-            encoding = r.encoding
-            language = detect(r.text)  # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
             error = ''
-            content_type = r.headers['Content-Type']
+            url = self.url
+
+            # Use a User Agent to simulate what a Firefox user would see
+            r = requests.get(url, headers=HEADERS, verify=False)
+            print('Downloaded ' + url )
+
+            self.request_stop = datetime.now()
+            print("Encoding: %s" % r.encoding )
+            print("num downloads: " + str(self.num_downloads))
+
+            text = r.text
+            self.unicode = r.text
+            self.content = r.content
+
+            self.encoding = r.encoding
+            self.error = error
+            self.language = detect(r.text) # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
+            self.content_type = r.headers['Content-Type']
+
+            print('Content-Type: ' + self.content_type)
+            print('Language:     ' + self.language)
+            print('Length: ' + str(len(self.content)))
+            print("Attempting to save ..  ")
+
+            ####### Archive a Copy of the Original File ########
+            doc_type = self.doc_type()
+            print("DocType::: " + doc_type)
+
+            if (self.content_type.startswith('text')):
+                open(self.filename_original(), 'w').write(r.text)   # text or html
+            else:
+                open(self.filename_original(), 'wb').write(self.content)  # binary
+
+            print("Saved original: " + self.filename_original() )
+            print('Content-Type: ' + self.content_type)
+            print('Language:     ' + self.language)
+            print('Length: ' + str(len(r.content)))
+
 
         except requests.HTTPError:
             self.request_stop = datetime.now()
@@ -81,23 +137,32 @@ class Document:
             """ TODO: Add better error tracking """
             error = "document: HTTPError"
 
-        return  {   'text': text,         # unicode
-                    'unicode': text,
-                    'content': content,   # raw
-                    'encoding': encoding,
-                    'error': error,
-                    'language': language,
-                    'content_type': content_type
-                }
+        self.request_dict = {
+            'text': text,              # unicode
+            'unicode': self.unicode,
+            'content': self.content,   # raw
+            'encoding': self.encoding,
+            'error': self.error,
+            'language': self.language,
+            'content_type': self.content_type
+        }
+
+        return self.request_dict
+
+    def download_dict(self):
+        return self.request_dict
+
 
     @lru_cache(maxsize=20)
     def download(self, convert_to_unicode=False):
         """
             Download the data and update tracking metrics
         """
+        # return utf-8 content
         return self.download_resource()['text']  # default to blank string
 
-    @lru_cache(maxsize=20)
+
+    @lru_cache(maxsize=500)
     def text(self):
         """ Create a text-only version of a document
             In the future, this method would handle other document formats
@@ -109,36 +174,44 @@ class Document:
 
             Idea: https://github.com/skylander86/lambda-text-extractor
         """
-
+        pdf_prefix = "../downloads/"
         doc_type = self.doc_type()
 
         if (doc_type == 'html'):
+
+            # Check Media Provider for transcript: Youtube Video
+            if (len(self.media_provider()) > 0):
+                supplemental_text = self.supplemental_text()
+
             soup = BeautifulSoup(self.html(), "html.parser")
             invisible_tags = ['style', 'script', '[document]', 'head', 'title']
             for elem in soup.findAll(invisible_tags):
                 elem.extract()  # hide javascript, css, etc
             text = soup.get_text()
+
             text = ftfy.fix_text(text)  # fix unicode problems
             text = convert_quotes_to_straight(text)
             text = normalize_whitespace(text)
 
-            return text
+            html_text = text + '\n\n' + supplemental_text
+            html_text = html_text.strip()
+
+            open(self.filename_text(), 'w').write(html_text)
+
+            return html_text
 
         elif (doc_type == 'pdf'):
             # example: https://demo.citeit.net/2020/06/30/well-behaved-women-seldom-make-history-original-pdf/
 
-            text_filename = urllib.parse.quote_plus(self.url)
-            headers = {'user-agent': 'Mozilla / 5.0(Windows NT 6.1;'
-                                     ' WOW64; rv: 54.0) Gecko/20100101 Firefox/71.0'}
+            print("Start PDF processing ..")
+            filename_original = self.filename_original()
+            filename_text = self.filename_text()
 
-            # Save PDF to temp file
-            r = requests.get(self.url, headers=headers, verify=False)
-            open("../downloads/"+ text_filename, 'wb').write(r.content)
-            print("Saving text to filename: " + text_filename)
+            print("Filename original: " + filename_original)
+            print("Filename:    text: " + filename_text)
 
 
-            # Extract text from original pdf file
-            with open("../downloads/" + text_filename, 'rb') as f:
+            with open(filename_original, 'rb') as f:
                 pdf = pdftotext.PDF(f)
 
             """
@@ -159,42 +232,55 @@ class Document:
             pdf_text = "\n\n".join(pdf)  # Combine text into single string
             pdf_text = pdf_text.strip()
 
-            # If able to generate text version from digital PDF
+            # Digital PDF with digitally extractable text: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
             if (len(pdf_text) > 0):
 
-                # Write text version to file:
-                text_version_filename = "../text-versions/" +  \
-                    os.path.splitext(text_filename)[0] + '.txt'  # replace .pdf file extension
-
-
-                print("Saving text version to: " + text_version_filename)
-                open(text_version_filename, 'w').write(pdf_text)
+                print("Saving digital pdf text version to: " + filename_text)
+                open(filename_text, 'w').write(pdf_text)
 
                 return pdf_text
 
-            else: # Generate text version from scanned doc using OCR (more CPU intensive)
+            # OCR: Generate text version from scanned doc using OCR (more CPU intensive)
+            else:  # example: https://faculty.washington.edu/rsoder/EDLPS579/DostoevskyGrandInquisitor.pdf
+                start_time = timeit.default_timer()
 
-                """
-                language = 'eng'  # hard coded for now
-                input_filename = r"Philosophy-of-Hypertext.pdf"
-                pdfs = glob.glob(text_filename)
-                output = ''
-    
-                for pdf_path in pdfs:
-                    pages = convert_from_path(pdf_path, 500)
-    
+                pdf_output = ''
+                language = 'eng'
+
+                pdfs = glob.glob(filename_original)
+                print("PDF globs")
+
+                for original_pdf_path in pdfs:
+                    pages = convert_from_path(filename_original, 500)
+                    print("PDFs converted.  Now enumerating ..")
+
                     for pageNum, imgBlob in enumerate(pages):
-                        text = pytesseract.image_to_string(imgBlob, lang=language)
-                        output_filename = output_file_base + '_page_' + str(pageNum) + '.txt'
 
-                        with open(output_filename, 'w') as the_file:
-                            #the_file.write(text)
-                            output = output.append(text)
-                """
+                        print("Page: " + str(pageNum))
 
-                error_text = "PDF file identified but unable to extract text. OCR Scanning not yet implemented."
+                        output_filename_page = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
+                            pageNum).zfill(4) + '.txt'
 
-                return error_text
+                        output_filename_complete = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
+
+                        # Use OCR to convert image > text
+                        text = pytesseract.image_to_string(imgBlob, language)
+                        pdf_output = pdf_output + ' ' + text
+
+                        # Write individual file:
+                        print(output_filename_page)
+                        with open(output_filename_page, 'w') as the_file:
+                            the_file.write(text)
+
+                    # Write Entire Text to file
+                    with open(output_filename_complete, 'w') as the_file:
+                        the_file.write(pdf_output)
+
+                # takes roughly 90 minutes (16 seconds per page)
+                print("The time difference is :",
+                      timeit.default_timer() - start_time)
+
+                return pdf_output
 
         elif (doc_type == 'txt'):
             return self.raw()
@@ -215,9 +301,6 @@ class Document:
             return "Powerpoint support not yet implemented.  To implement it see:  https://python-pptx.readthedocs.org/en/latest/"
 
         elif (doc_type == 'ps'):
-            return "Doc support not yet implemented.  To implement it see: http://www.winfield.demon.nl/"
-
-        elif (doc_type == 'audio/mpeg'):
             return "Doc support not yet implemented.  To implement it see: http://www.winfield.demon.nl/"
 
         elif (doc_type == 'audio/mpeg'):
@@ -259,91 +342,43 @@ class Document:
         else:
             return 'error: no doc_type: ' + doc_type
 
+    def content_type_lookup(self):
+
+        if (len(self.content_type) > 0):
+            return self.content_type
+        else:
+            return self.download_resource()['content_type']
+
+
+    @lru_cache(maxsize=500)
     def doc_type(self):
         # Distinguish between html, text, .doc, ppt, and pdf
-        content_type = self.download_resource()['content_type']
-
-        if  (   content_type.startswith('text/html') or
-                content_type.startswith('application/html')
-            ):
-            doc_type = 'html'
-
-        elif    content_type.startswith('application/pdf'):
-            doc_type = 'pdf'
-
-        elif (  (content_type == 'text/plain') or
-                content_type.startswith('text')
-            ):
-            doc_type = 'txt'
-
-        elif    content_type == 'application/rtf':
-            doc_type = 'rtf'
-
-        elif    content_type == 'application/epub+zip':
-            doc_type = 'epub'
-
-        elif (  content_type.startswith('application/msword') or
-                content_type.startswith('application/vnd.openxmlformats-officedocument.wordprocessingml.document') or
-                content_type.startswith('application/vnd.openxmlformats-officedocument.wordprocessingml.template') or
-                content_type.startswith('application/vnd.ms-word.document.macroEnabled.12')
-            ):
-            doc_type = 'doc'
-
-        elif    content_type.startswith('application/vnd.ms-powerpoint'):
-            doc_type = 'ppt'
-
-        elif    content_type == 'audio/mpeg':
-            doc_type = 'audio/mpeg'
-
-        elif    content_type == 'video/mpeg':
-            doc_type = 'video/mpeg'
-
-        elif    content_type == 'audio/ogg':
-            doc_type = 'audio/ogg'
-
-        elif    content_type == 'video/ogg':
-            doc_type = 'video/ogg'
-
-        elif    content_type == 'application/ogg':
-            doc_type = 'audio/ogg'
-
-        elif( content_type == 'audio/wav'):
-            doc_type = 'wav'
-
-        elif (content_type == 'audio/aac'):
-            doc_type = 'aac'
-
-        elif (  content_type == 'image/jpg' or
-                content_type == 'image/jpeg'
-            ):
-            doc_type = 'jpg'
-
-        elif    content_type == 'image/png':
-            doc_type = 'png'
-
-        elif    content_type == 'image/tiff':
-            doc_type = 'tiff'
-
-        elif    content_type == 'image/webp':
-            doc_type = 'webp'
-
-        elif    content_type == 'image/gif':
-            doc_type = 'gif'
-
-        elif    content_type == 'application/vnd.ms-excel':
-            doc_type = 'xls'
-
-        elif (  (content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') or
-                (content_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.template')
-            );
-            doc_type = 'xlsx'
-
-        else:
-             doc_type = 'error: no doc_type: ' + doc_type
-
-        print("Doc Type: " + doc_type)
+        content_type = self.content_type_lookup()
+        doc_type = Content_Type.doc_type(content_type)
         return doc_type
 
+    def media_provider(self):
+        domain = urlparse(self.url).netloc
+        return Content_Type.media_provider(domain)
+
+
+    def supplemental_text(self):
+        media_provider = self.media_provider()
+        url = self.url
+        supplemental_text = ''
+
+        if (media_provider == 'youtube'):
+            # Lookup YouTube Transcript with python libraries:
+            # https://www.openpolitics.com/links/youtube-working-with-auto-generated-transcripts/
+            # https://www.openpolitics.com/links/webvtt-py-0-4-2/
+            # Create Class:  supplemental_text = Youtube_Transcript.generate_text(url)
+
+            supplemental_text = "Youtube transcripts not yet implemented.   (See document.supplemental_text() )"
+
+        elif (media_provider == 'vimeo'):
+            supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
+
+        return supplemental_text
 
     @lru_cache(maxsize=20)
     def raw(self, convert_to_unicode=True):
@@ -357,11 +392,16 @@ class Document:
         else:
             return ''
 
+    @lru_cache(maxsize=500)
     def html(self):
         """ Get html code, if doc_type = 'html' """
         html = ""
+        print('unicode' + self.download_resource()['unicode'])
+
         if self.doc_type() == 'html':
-            html = self.download_resource()['unicode']   #self.raw()
+            #html = self.download_resource()['unicode']   #self.raw()
+            html = self.unicode
+
         return html
 
     @lru_cache(maxsize=20)
@@ -375,8 +415,13 @@ class Document:
 
         html = self.html()
 
-        return  Canonical_URL(html).canonical_url()
+        return  Canonical_URL(html, url=self.url).canonical_url()
 
+    @lru_cache(maxsize=500)
+    def canonical_url_without_protocol(self):
+        return url_without_protocol(self.canonical_url())
+
+    @lru_cache(maxsize=500)
     def citeit_url(self):
         """ Use the canonical_url, if it exists.
             Otherwise, use the user-supplied url.
@@ -392,7 +437,21 @@ class Document:
     def url_without_protocol(self):
         return Canonical_URL(self.url).url_without_protocol()
 
-    @lru_cache(maxsize=20)
+
+    @lru_cache(maxsize=500)
+    def filename_original(self):
+        canonical_path = urllib.parse.quote_plus(self.canonical_url_without_protocol())
+
+        # Example '../downloads/html/avalon.law.yale.edu/19th_century/jeffauto.asp'#
+        original_file_path = PDF_PREFIX + self.doc_type() + '/' + canonical_path
+
+        return original_file_path
+
+    def filename_text(self):
+        return self.filename_original() + '.txt'
+
+
+    @lru_cache(maxsize=500)
     def data(self, verbose_view=False):
         """ Dictionary of data associated with URL """
         data = {}
@@ -415,17 +474,19 @@ class Document:
 
         return data
 
-    @lru_cache(maxsize=20)
+    @lru_cache(maxsize=500)
     def encoding(self):
         """ Returns character-encoding for requested document
         """
         resource = self.download_resource()
         return resource['encoding'].lower()
 
+    @lru_cache(maxsize=50)
     def language(self):
         resource = self.download_resource()
         return resource['language']
 
+    @lru_cache(maxsize=50)
     def request_start(self):
         """ When the Class was instantiated """
         return self.request_start
@@ -491,3 +552,8 @@ def normalize_whitespace(str):
         str = str.strip()               # trim whitespace at beginning and end
         str = re.sub(r'\s+', ' ', str)  # convert multiple spaces into single space
     return str
+
+
+def format_filename(filename):
+    folder_separator = "%2"
+    return filename.replace("/", folder_separator)

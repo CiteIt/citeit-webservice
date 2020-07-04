@@ -9,9 +9,9 @@
   * You can use pip to install the required python libraries:
     * pip install vitualenv
 
-  * http://docs.python-guide.org/en/latest/dev/virtualenvs/
+  * https://docs.python.org/3/library/venv.html
   * Use a Virtual Environment to house all your libraries
-    * virtualenv venv
+    * python3 -m venv venv
 
   * Activate to Virtual Environment
     * source venv/bin/activate
@@ -21,7 +21,6 @@
 
   * Install the requirements listed in the requirements text file
     * pip install -r requirements.txt
-    * pip install 'requests[security]'
 
 ### Flask Configure:
 
@@ -51,7 +50,7 @@
 If you don't already have your own tool preferences, here's a few ideas
 to get you started:
 
-Github's Atom Editor
+Github's free Atom Editor
 https://atom.io/
 
 Desktop Git Client

@@ -33,7 +33,7 @@ class Canonical_URL:
 
     def __init__(self, html, url=None):
         self.html = html  # page's html, containing potential link, meta tags
-        self.url = url    # optional, default if no canonical value found
+        self.url = url    # optional, default if no canonical value found (or if not an html doc)
 
     def canonical_url(self):
         """ Web pages may be served from multiple URLs.
@@ -56,6 +56,9 @@ class Canonical_URL:
             og_url = soup.find("meta", property="og:url")
             if og_url:
                 canonical_url = og_url['content']
+            else:
+                # Assuming not a HTML doc: use the document url
+                return self.url
 
         return canonical_url
 
