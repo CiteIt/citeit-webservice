@@ -2,11 +2,11 @@ import os
 
 VERSION_NUM = os.getenv('VERSION_NUM', '0.4')  # used to version the sha256 hash filename
 
-AMAZON_ACCESS_KEY = os.getenv('AMAZON_ACCESS_KEY', aws_settings.AMAZON_ACCESS_KEY)      # 'ABCDEFGH123456789'
-AMAZON_SECRET_KEY = os.getenv('AMAZON_SECRET_KEY', aws_settings.AMAZON_SECRET_KEY)      # 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
-AMAZON_S3_BUCKET = os.getenv('AMAZON_S3_BUCKET', aws_settings.AMAZON_S3_BUCKET)         # 'read.citeit.net'
-AMAZON_S3_ENDPOINT = os.getenv('AMAZON_S3_ENDPOINT', aws_settings.AMAZON_S3_ENDPOINT)   # 's3.amazonaws.com'
-AMAZON_REGION_NAME = os.getenv('AMAZON_REGION_NAME', aws_settings.AMAZON_REGION_NAME)   # 'us-east-1'
+AMAZON_ACCESS_KEY = os.getenv('AMAZON_ACCESS_KEY')     # 'ABCDEFGH123456789'
+AMAZON_SECRET_KEY = os.getenv('AMAZON_SECRET_KEY')     # 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
+AMAZON_S3_BUCKET = os.getenv('AMAZON_S3_BUCKET')       # 'read.citeit.net'
+AMAZON_S3_ENDPOINT = os.getenv('AMAZON_S3_ENDPOINT')   # 's3.amazonaws.com'
+AMAZON_REGION_NAME = os.getenv('AMAZON_REGION_NAME')   # 'us-east-1'
 
 
 JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
@@ -31,4 +31,5 @@ TEXT_ESCAPE_CODE_POINTS = set ( [
     , 5760, 6158, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200
     , 8201, 8202, 8239, 8287, 8288, 12288
 ])
+
 
