@@ -15,13 +15,6 @@ import requests
 import urllib
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup  # convert html > text
-
-from pdf2image import convert_from_path
-import pdftotext      # convert pdf > text without using ocr
-import pytesseract    # ocr library for python
-import glob
-
 from datetime import datetime
 from langdetect import detect    # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
 from functools import lru_cache
@@ -29,6 +22,10 @@ import ftfy                      # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
 import os
 import timeit
+
+from bs4 import BeautifulSoup  # convert html > text
+
+
 
 FOLDER_SEPARATOR = "%2"
 PDF_PREFIX = "../downloads/"
@@ -202,6 +199,12 @@ class Document:
 
         elif (doc_type == 'pdf'):
             # example: https://demo.citeit.net/2020/06/30/well-behaved-women-seldom-make-history-original-pdf/
+            # quoted source: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
+
+            try:
+                import pdftotext  # convert pdf > text without using ocr
+            except ImportError:
+                return "Unable to process digital PDF. Pdftotext library not installed."
 
             print("Start PDF processing ..")
             filename_original = self.filename_original()
@@ -243,6 +246,13 @@ class Document:
             # OCR: Generate text version from scanned doc using OCR (more CPU intensive)
             else:  # example: https://faculty.washington.edu/rsoder/EDLPS579/DostoevskyGrandInquisitor.pdf
                 start_time = timeit.default_timer()
+
+                try:
+                    from pdf2image import convert_from_path
+                    import pytesseract  # ocr library for python
+                    import glob
+                except ImportError:
+                    return "Unable to run OCR to generate PDF from scanned image.  Pdf2impage, Pytesseract not installed for Docker"
 
                 pdf_output = ''
                 language = 'eng'
