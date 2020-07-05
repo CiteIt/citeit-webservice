@@ -290,6 +290,9 @@ class Document:
                 print("The time difference is :",
                       timeit.default_timer() - start_time)
 
+                if ('â€™' in pdf_output) or ('â€' in pdf_output) or ('â€œ' in pdf_output):
+                    pdf_output = pdf_output.encode("Windows-1252").force_encoding("UTF-8")
+
                 return pdf_output
 
         elif (doc_type == 'txt'):
