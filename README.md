@@ -79,6 +79,9 @@ python3 -m flask run --host=0.0.0.0 --port=80
 ### Docker:
 docker build -t citeit_webservice:latest .
 
+docker tag ce0bdceb4791 citeit/citeit_webservice:v0.4.2
+docker push citeit/citeit_webservice:v0.4.2
+
 docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
 
 ## Inspiration:

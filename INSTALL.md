@@ -20,8 +20,13 @@
     * (venv) Your Computer:your_username $
 
   * Install the requirements listed in the requirements text file
+    * apt-get install python-dev
+    * apt-get install -y poppler-utils
+    * apt-get install build-essential libpoppler-cpp-dev pkg-config python-dev
+
     * pip install -r requirements.txt
 
+    
 ### Flask Configure:
 
   * cd app/
