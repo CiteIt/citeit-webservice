@@ -8,6 +8,7 @@ AMAZON_S3_BUCKET = os.getenv('AMAZON_S3_BUCKET')       # 'read.citeit.net'
 AMAZON_S3_ENDPOINT = os.getenv('AMAZON_S3_ENDPOINT')   # 's3.amazonaws.com'
 AMAZON_REGION_NAME = os.getenv('AMAZON_REGION_NAME')   # 'us-east-1'
 
+SAVE_DOWNLOADS_TO_FILE = False
 
 JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
 SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost/database_name'

@@ -22,6 +22,7 @@ import ftfy                      # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
 import os
 import timeit
+import settings
 
 from bs4 import BeautifulSoup  # convert html > text
 
@@ -117,10 +118,11 @@ class Document:
             doc_type = self.doc_type()
             print("DocType::: " + doc_type)
 
-            if (self.content_type.startswith('text')):
-                open(self.filename_original(), 'w').write(r.text)   # text or html
-            else:
-                open(self.filename_original(), 'wb').write(self.content)  # binary
+            if (settings.SAVE_DOWNLOADS_TO_FILE):
+                if (self.content_type.startswith('text')):
+                    open(self.filename_original(), 'w').write(r.text)   # text or html
+                else:
+                    open(self.filename_original(), 'wb').write(self.content)  # binary
 
             print("Saved original: " + self.filename_original() )
             print('Content-Type: ' + self.content_type)
@@ -193,7 +195,8 @@ class Document:
             html_text = text + '\n\n' + supplemental_text
             html_text = html_text.strip()
 
-            open(self.filename_text(), 'w').write(html_text)
+            if (settings.SAVE_DOWNLOADS_TO_FILE):
+                open(self.filename_text(), 'w').write(html_text)
 
             return html_text
 
@@ -213,9 +216,9 @@ class Document:
             print("Filename original: " + filename_original)
             print("Filename:    text: " + filename_text)
 
-
-            with open(filename_original, 'rb') as f:
-                pdf = pdftotext.PDF(f)
+            if (settings.SAVE_DOWNLOADS_TO_FILE):
+                with open(filename_original, 'rb') as f:
+                    pdf = pdftotext.PDF(f)
 
             """
             // Credit: https://pypi.org/project/pdftotext/
@@ -235,65 +238,67 @@ class Document:
             pdf_text = "\n\n".join(pdf)  # Combine text into single string
             pdf_text = pdf_text.strip()
 
-            # Digital PDF with digitally extractable text: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
-            if (len(pdf_text) > 0):
+            if (settings.SAVE_DOWNLOADS_TO_FILE):
+                # Digital PDF with digitally extractable text: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
+                if (len(pdf_text) > 0):
+                    print("Saving digital pdf text version to: " + filename_text)
+                    open(filename_text, 'w').write(pdf_text)
 
-                print("Saving digital pdf text version to: " + filename_text)
-                open(filename_text, 'w').write(pdf_text)
+                    return pdf_text
 
-                return pdf_text
+                # OCR: Generate text version from scanned doc using OCR (more CPU intensive)
+                else:  # example: https://faculty.washington.edu/rsoder/EDLPS579/DostoevskyGrandInquisitor.pdf
+                    start_time = timeit.default_timer()
 
-            # OCR: Generate text version from scanned doc using OCR (more CPU intensive)
-            else:  # example: https://faculty.washington.edu/rsoder/EDLPS579/DostoevskyGrandInquisitor.pdf
-                start_time = timeit.default_timer()
+                    try:
+                        from pdf2image import convert_from_path
+                        import pytesseract  # ocr library for python
+                        import glob
+                    except ImportError:
+                        return "Unable to run OCR to generate PDF from scanned image.  Pdf2impage, Pytesseract not installed for Docker"
 
-                try:
-                    from pdf2image import convert_from_path
-                    import pytesseract  # ocr library for python
-                    import glob
-                except ImportError:
-                    return "Unable to run OCR to generate PDF from scanned image.  Pdf2impage, Pytesseract not installed for Docker"
+                    pdf_output = ''
+                    language = 'eng'
 
-                pdf_output = ''
-                language = 'eng'
+                    pdfs = glob.glob(filename_original)
+                    print("PDF globs")
 
-                pdfs = glob.glob(filename_original)
-                print("PDF globs")
+                    for original_pdf_path in pdfs:
+                        pages = convert_from_path(filename_original, 500)
+                        print("PDFs converted.  Now enumerating ..")
 
-                for original_pdf_path in pdfs:
-                    pages = convert_from_path(filename_original, 500)
-                    print("PDFs converted.  Now enumerating ..")
+                        for pageNum, imgBlob in enumerate(pages):
 
-                    for pageNum, imgBlob in enumerate(pages):
+                            print("Page: " + str(pageNum))
 
-                        print("Page: " + str(pageNum))
+                            output_filename_page = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
+                                pageNum).zfill(4) + '.txt'
 
-                        output_filename_page = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
-                            pageNum).zfill(4) + '.txt'
+                            output_filename_complete = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
 
-                        output_filename_complete = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
+                            # Use OCR to convert image > text
+                            text = pytesseract.image_to_string(imgBlob, language)
+                            pdf_output = pdf_output + ' ' + text
 
-                        # Use OCR to convert image > text
-                        text = pytesseract.image_to_string(imgBlob, language)
-                        pdf_output = pdf_output + ' ' + text
+                            # Write individual file:
+                            if (settings.SAVE_DOWNLOADS_TO_FILE):
+                                print(output_filename_page)
+                                with open(output_filename_page, 'w') as the_file:
+                                    the_file.write(text)
 
-                        # Write individual file:
-                        print(output_filename_page)
-                        with open(output_filename_page, 'w') as the_file:
-                            the_file.write(text)
+                    if (settings.SAVE_DOWNLOADS_TO_FILE):
+                        # Write Entire Text to file
+                        with open(output_filename_complete, 'w') as the_file:
+                            the_file.write(pdf_output)
 
-                    # Write Entire Text to file
-                    with open(output_filename_complete, 'w') as the_file:
-                        the_file.write(pdf_output)
+            # takes roughly 90 minutes (16 seconds per page)
+            print("The time difference is :",
+                  timeit.default_timer() - start_time)
 
-                # takes roughly 90 minutes (16 seconds per page)
-                print("The time difference is :",
-                      timeit.default_timer() - start_time)
+            if ('â€™' in pdf_output) or ('â€' in pdf_output) or ('â€œ' in pdf_output):
+                pdf_output = pdf_output.encode("Windows-1252").force_encoding("UTF-8")
 
-                if ('â€™' in pdf_output) or ('â€' in pdf_output) or ('â€œ' in pdf_output):
-                    pdf_output = pdf_output.encode("Windows-1252").force_encoding("UTF-8")
-
-                return pdf_output
+            return pdf_output
 
         elif (doc_type == 'txt'):
             return self.raw()
@@ -488,7 +493,7 @@ class Document:
         return data
 
     @lru_cache(maxsize=500)
-    def encoding(self):
+    def encoding_lookup(self):
         """ Returns character-encoding for requested document
         """
         resource = self.download_resource()

@@ -185,8 +185,8 @@ class Quote:
         """
         hash_method = getattr(hashlib, HASH_ALGORITHM)
         hash_text = self.hashkey()
-        encoding = self.citing_doc().encoding()
-
+        encoding = self.citing_doc().encoding_lookup()
+        print("Encoding: " + encoding)
         return hash_method(hash_text.encode(encoding)).hexdigest()
 
     def error(self):
