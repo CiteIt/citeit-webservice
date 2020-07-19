@@ -12,6 +12,9 @@ from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.canonical_url import url_without_protocol
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 import urllib
 from urllib.parse import urlparse
 
@@ -20,9 +23,9 @@ from langdetect import detect    # https://www.geeksforgeeks.org/detect-an-unkno
 from functools import lru_cache
 import ftfy                      # Fix bad unicode:  http://ftfy.readthedocs.io/
 import re
-import os
 import timeit
 import settings
+import tldextract
 
 from bs4 import BeautifulSoup  # convert html > text
 
@@ -93,9 +96,27 @@ class Document:
             url = self.url
 
             # Use a User Agent to simulate what a Firefox user would see
-            r = requests.get(url, headers=HEADERS, verify=False)
-            print('Downloaded ' + url )
+            session = requests.Session()
+            retry = Retry(connect=5, backoff_factor=0.5)
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
 
+            try:
+                r = session.get(url, headers=HEADERS, verify=False)
+            except requests.exceptions.ConnectionError:
+                # r.status_code = "Connection refused"
+                return {
+                    'text': '',              # unicode
+                    'unicode': url,
+                    'content': url,   # raw
+                    'encoding': '',
+                    'error': "Connection refused",
+                    'language': '',
+                    'content_type': ''
+                }
+
+            print('Downloaded ' + url )
             self.request_stop = datetime.now()
             print("Encoding: %s" % r.encoding )
             print("num downloads: " + str(self.num_downloads))
@@ -176,7 +197,9 @@ class Document:
         pdf_prefix = "../downloads/"
         doc_type = self.doc_type()
 
+
         if (doc_type == 'html'):
+            print("HTML text()")
 
             # Check Media Provider for transcript: Youtube Video
             if (len(self.media_provider()) > 0):
@@ -192,7 +215,7 @@ class Document:
             text = convert_quotes_to_straight(text)
             text = normalize_whitespace(text)
 
-            html_text = text + '\n\n' + supplemental_text
+            html_text = text + '\n\n' + self.supplemental_text()
             html_text = html_text.strip()
 
             if (settings.SAVE_DOWNLOADS_TO_FILE):
@@ -300,6 +323,10 @@ class Document:
 
             return pdf_output
 
+        elif (doc_type == 'json'):
+            print("SUPPLEMENTAL TEXT()")
+            return self.supplemental_text()
+
         elif (doc_type == 'txt'):
             return self.raw()
 
@@ -357,6 +384,14 @@ class Document:
         elif (doc_type == 'xlsx'):
             return "XLSX support not yet implemented.  To implement it see: https://pypi.python.org/pypi/xlrd"
 
+        elif (doc_type == 'json'):
+            print("JSON DOC TYPE")
+            text = ''
+            if (len(self.media_provider()) > 0):
+                text = self.supplemental_text()
+
+            return text
+
         else:
             return 'error: no doc_type: ' + doc_type
 
@@ -376,12 +411,35 @@ class Document:
         return doc_type
 
     def media_provider(self):
-        domain = urlparse(self.url).netloc
-        return Content_Type.media_provider(domain)
+
+        url = 'https://api.oyez.org/case_media/oral_argument_audio/24995'
+        ext = tldextract.extract(url)
+
+        # OYEZ : Supereme Court Transcripts
+        if (ext.domain == 'youtube' and ext.suffix == 'com'):
+            return 'youtube'
+
+        elif (ext.domain == 'youtu' and ext.suffix == 'be'):
+            return 'youtube'
+
+        elif (ext.domain == 'vimeo' and ext.suffix == 'com'):
+            return 'vimeo'
+
+        elif (ext.domain == 'soundcloud' and ext.suffix == 'com'):
+            return 'soundcloud'
+
+        elif (ext.domain == 'oyez' and ext.suffix == 'org'):
+            return 'oyez.org'
+
+        else:
+            return ''
 
 
     def supplemental_text(self):
+
         media_provider = self.media_provider()
+        print("MEDIA PROVIDER: " + media_provider)
+
         url = self.url
         supplemental_text = ''
 
@@ -395,6 +453,9 @@ class Document:
 
         elif (media_provider == 'vimeo'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
+
+        elif (media_provider == 'oyez.org'):
+            supplemental_text = oyez_transcript(self.url)
 
         return supplemental_text
 
@@ -575,3 +636,66 @@ def normalize_whitespace(str):
 def format_filename(filename):
     folder_separator = "%2"
     return filename.replace("/", folder_separator)
+
+# --------------- Media Providers: Transcript difffernt from URL ------------#
+
+# Oyez: Supreme Court Transcripts
+
+def get_domain(public_url):
+    from urllib.parse import urlparse
+    parsed_uri = urlparse(public_url)
+    domain = '{uri.netloc}'.format(uri=parsed_uri)
+    return domain
+
+def oyez_public_json(public_apps_url):
+    # Lookup case_id from apps url and return api url
+    json_url = ''
+
+    # Make sure the domain is Oyez:
+    ext = tldextract.extract(public_apps_url)
+    if (ext.domain == 'oyez' and ext.suffix == 'org'):
+        case_id = re.match('.*?([0-9]+)$', public_apps_url).group(1)
+        json_url = 'https://api.oyez.org/case_media/oral_argument_audio/' + case_id
+    else:
+        print("NOT: oyez.org")
+
+    return json_url
+
+
+def oyez_transcript(public_url):
+    # Convert public json url to text transcript
+    json_url = oyez_public_json(public_url)
+
+    if (len(json_url) == 0):
+        print("NOT: " + json_url)
+        return ''
+
+    else:
+        print("OYEZ JSON: " + json_url)
+
+        output = ''
+        line_output = ''
+
+        r = requests.get(url=json_url)
+        data = r.json()  # Check the JSON Response Content documentation below
+
+        for num, sections in enumerate(data['transcript']['sections']):
+
+            for turns in sections['turns']:
+                turn_num = 0
+
+                for section_dict in turns:
+                    section_num = 0
+
+                    for text in turns['text_blocks']:
+                        if (text['text'] != line_output):
+
+                            if (turn_num == 0):
+                                output = output + text['text'] + "\n\n"
+                            line_output = text['text']
+
+                        section_num = section_num + 1
+
+                    turn_num = turn_num + 1
+
+        return output

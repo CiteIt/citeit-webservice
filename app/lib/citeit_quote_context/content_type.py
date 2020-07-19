@@ -86,6 +86,9 @@ class Content_Type:
         ):
             doc_type = 'xlsx'
 
+        elif content_type == 'application/json':
+            return 'json'
+
         else:
             doc_type = 'error: no doc_type: ' + content_type
 

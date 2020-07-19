@@ -10,6 +10,7 @@ Jinja2==2.11.2
 requests==2.24.0
 SQLAlchemy==1.3.18
 langdetect==1.0.8
+tldextract==2.2.2
 
 # PDF libraries: don't work in Docker: Uncomment to run Flask directly in Python
 # pdftotext==2.1.4
