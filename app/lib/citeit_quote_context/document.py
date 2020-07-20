@@ -17,6 +17,7 @@ from requests.packages.urllib3.util.retry import Retry
 
 import urllib
 from urllib.parse import urlparse
+from urllib.parse import parse_qs
 
 from datetime import datetime
 from langdetect import detect    # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
@@ -26,6 +27,8 @@ import re
 import timeit
 import settings
 import tldextract
+
+import youtube_dl
 
 from bs4 import BeautifulSoup  # convert html > text
 
@@ -412,22 +415,24 @@ class Document:
 
     def media_provider(self):
 
-        url = 'https://api.oyez.org/case_media/oral_argument_audio/24995'
-        ext = tldextract.extract(url)
+        ext = tldextract.extract(self.url)
 
-        # OYEZ : Supereme Court Transcripts
+        # YouTube
         if (ext.domain == 'youtube' and ext.suffix == 'com'):
             return 'youtube'
 
         elif (ext.domain == 'youtu' and ext.suffix == 'be'):
             return 'youtube'
 
+        # Vimeo
         elif (ext.domain == 'vimeo' and ext.suffix == 'com'):
             return 'vimeo'
 
+        # Soundcloud
         elif (ext.domain == 'soundcloud' and ext.suffix == 'com'):
             return 'soundcloud'
 
+        # OYEZ : Supereme Court Transcripts
         elif (ext.domain == 'oyez' and ext.suffix == 'org'):
             return 'oyez.org'
 
@@ -437,25 +442,19 @@ class Document:
 
     def supplemental_text(self):
 
-        media_provider = self.media_provider()
-        print("MEDIA PROVIDER: " + media_provider)
-
         url = self.url
         supplemental_text = ''
 
-        if (media_provider == 'youtube'):
-            # Lookup YouTube Transcript with python libraries:
-            # https://www.openpolitics.com/links/youtube-working-with-auto-generated-transcripts/
-            # https://www.openpolitics.com/links/webvtt-py-0-4-2/
-            # Create Class:  supplemental_text = Youtube_Transcript.generate_text(url)
+        media_provider = self.media_provider()
 
-            supplemental_text = "Youtube transcripts not yet implemented.   (See document.supplemental_text() )"
+        if (media_provider == 'youtube'):
+            supplemental_text = youtube_transcript(url)
 
         elif (media_provider == 'vimeo'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
 
         elif (media_provider == 'oyez.org'):
-            supplemental_text = oyez_transcript(self.url)
+            supplemental_text = oyez_transcript(url)
 
         return supplemental_text
 
@@ -637,7 +636,7 @@ def format_filename(filename):
     folder_separator = "%2"
     return filename.replace("/", folder_separator)
 
-# --------------- Media Providers: Transcript difffernt from URL ------------#
+# --------------- Media Providers: Transcript diffferent for URL Type ------------#
 
 # Oyez: Supreme Court Transcripts
 
@@ -699,3 +698,137 @@ def oyez_transcript(public_url):
                     turn_num = turn_num + 1
 
         return output
+
+
+def youtube_video_id(value):
+    # Get id from YouTube URL
+    # Credit: https://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
+
+    """
+    Examples:
+    - http://youtu.be/SA2iWivDJiE
+    - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+    - http://www.youtube.com/embed/SA2iWivDJiE
+    - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+    """
+    query = urlparse(value)
+    if query.hostname == 'youtu.be':
+        return query.path[1:]
+    if query.hostname in ('www.youtube.com', 'youtube.com'):
+        if query.path == '/watch':
+            p = parse_qs(query.query)
+            return p['v'][0]
+        if query.path[:7] == '/embed/':
+            return query.path.split('/')[2]
+        if query.path[:3] == '/v/':
+            return query.path.split('/')[2]
+    # fail?
+    return None
+
+
+def youtube_transcript(url):
+
+    transcript_output = ''
+
+    ydl = youtube_dl.YoutubeDL(
+        {   'writesubtitles': True,
+            'allsubtitles': True,
+            'writeautomaticsub': True
+        }
+    )
+
+    res = ydl.extract_info(url, download=False)
+    youtube_id = youtube_video_id(url)
+
+    if res['requested_subtitles'] and res['requested_subtitles'][
+        'en']:
+        print('Grabbing vtt file from ' +
+              res['requested_subtitles']['en']['url'])
+        response = requests.get(
+            res['requested_subtitles']['en']['url'],
+            stream=True
+        )
+        f1 = open("../transcripts/" + youtube_id + ".txt", "w")
+
+        text = response.text
+
+        import itertools
+        import re
+
+        # Remove Formatting: time & color ccodes
+        # Credit: Alex Chan
+        # Source: https://github.com/alexwlchan/junkdrawer/blob/d8ee4dee1b89181d114500b6e2d69a48e2a0e9c1/services/youtube/vtt2txt.py
+
+        # Throw away the header, which is of the form:
+        #
+        #     WEBVTT
+        #     Kind: captions
+        #     Language: en
+        #     Style:
+        #     ::cue(c.colorCCCCCC) { color: rgb(204,204,204);
+        #      }
+        #     ::cue(c.colorE5E5E5) { color: rgb(229,229,229);
+        #      }
+        #     ##
+        #
+
+        #>>>>>>>>>>>text = text.split("##\n", 1)[1]
+
+        # Now throw away all the timestamps, which are typically of
+        # the form:
+        #
+        #     00:00:01.819 --> 00:00:01.829 align:start position:0%
+        #
+        text, _ = re.subn(
+            r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3} align:start position:0%\n',
+            '',
+            text
+        )
+
+        # And the color changes, e.g.
+        #
+        #     <c.colorE5E5E5>
+        #
+        text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
+
+        # And any other timestamps, typically something like:
+        #
+        #    </c><00:00:00,539><c>
+        #
+        # with optional closing/opening tags.
+        text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
+                          '', text)
+
+        # 00:00:03,500 --> 00:00:03,510
+        text, _ = re.subn(
+            r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3}\n', '',
+            text)
+
+        # Now get the distinct lines.
+        text = [line.strip() + " " for line in text.splitlines() if line.strip()]
+
+        for line, _ in itertools.groupby(text):
+            transcript_output += line + " "
+
+        transcript_output = transcript_output.replace("\n", " ")
+        transcript_output = transcript_output.replace(": captions", " ")
+        transcript_output = transcript_output.replace("Language: en", " ")
+
+        transcript_output = transcript_output.replace("   ", " ")
+        transcript_output = transcript_output.replace("  ", " ")
+        transcript_output = transcript_output.replace("WEBVTT Kind", " ")
+        transcript_output = transcript_output.replace("WEBVTTKind", " ")
+        transcript_output = transcript_output.strip()
+
+        f1.write(transcript_output)
+        f1.close()
+
+        if len(res['subtitles']) > 0:
+            print('manual captions')
+        else:
+            print('automatic_captions')
+
+    else:
+        print('Youtube Video does not have any english captions')
+
+    return transcript_output

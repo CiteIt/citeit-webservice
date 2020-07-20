@@ -8,16 +8,17 @@ x Test List of URL Hashes
 
 x  update citeit-wordpress to include lib/jquery
 
-  Update Demo Pages:
-  	Al Gore/Sarah Palin
-	Ted Nelson: Hypertext:  Test/Reduce number of simultanous quotes
+x  Update Demo Pages:
+x 	Al Gore/Sarah Palin
+x	Ted Nelson: Hypertext:  Test/Reduce number of simultanous quotes
+
+  Create demo video
 
   Create postgres database save json. Setup Postgres DB
 
   Test Docker Compose
   Create ReadTheDocs documentation
-  Create demo video
-
+ 
   Compress JSON with Gzip.
   Add Gzip and Brotli compression to Nginx
 

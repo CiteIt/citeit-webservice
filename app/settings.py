@@ -1,12 +1,13 @@
 import os
+import aws_settings
 
 VERSION_NUM = os.getenv('VERSION_NUM', '0.4')  # used to version the sha256 hash filename
 
-AMAZON_ACCESS_KEY = os.getenv('AMAZON_ACCESS_KEY')     # 'ABCDEFGH123456789'
-AMAZON_SECRET_KEY = os.getenv('AMAZON_SECRET_KEY')     # 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
-AMAZON_S3_BUCKET = os.getenv('AMAZON_S3_BUCKET')       # 'read.citeit.net'
-AMAZON_S3_ENDPOINT = os.getenv('AMAZON_S3_ENDPOINT')   # 's3.amazonaws.com'
-AMAZON_REGION_NAME = os.getenv('AMAZON_REGION_NAME')   # 'us-east-1'
+AMAZON_ACCESS_KEY = 'AKIAXHQAFKHENPCJIMOI'     # 'ABCDEFGH123456789'
+AMAZON_SECRET_KEY = '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'     # 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
+AMAZON_S3_BUCKET = 'read.citeit.net'       # 'read.citeit.net'
+AMAZON_S3_ENDPOINT = 's3.amazonaws.com'   # 's3.amazonaws.com'
+AMAZON_REGION_NAME = 'us-east-1'           # 'us-east-1'
 
 SAVE_DOWNLOADS_TO_FILE = False
 
