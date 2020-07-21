@@ -1,4 +1,6 @@
-# Upload to AWS S3
+# Default AWS Template: Used to Upload JSON files to AWS S3
+# Enter your own AWS Key Info and copy this file to: aws_setting.py
+
 AMAZON_ACCESS_KEY = 'ABCDEFGH123456789'
 AMAZON_SECRET_KEY = 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
 AMAZON_S3_BUCKET = 'read.citeit.net'

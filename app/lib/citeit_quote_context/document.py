@@ -748,7 +748,6 @@ def youtube_transcript(url):
             res['requested_subtitles']['en']['url'],
             stream=True
         )
-        f1 = open("../transcripts/" + youtube_id + ".txt", "w")
 
         text = response.text
 
@@ -820,8 +819,11 @@ def youtube_transcript(url):
         transcript_output = transcript_output.replace("WEBVTTKind", " ")
         transcript_output = transcript_output.strip()
 
-        f1.write(transcript_output)
-        f1.close()
+
+        if settings.SAVE_DOWNLOADS_TO_FILE:
+            f1 = open("../transcripts/" + youtube_id + ".txt", "w")
+            f1.write(transcript_output)
+            f1.close()
 
         if len(res['subtitles']) > 0:
             print('manual captions')
