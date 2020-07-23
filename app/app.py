@@ -196,7 +196,14 @@ def canonical_url():
 @app.route('/v' + WEBSERVICE_VERSION + '/url/text-version', methods=['GET'])
 def document_text_version():
     url = request.args.get('url', '')
-    d = Document(url)
+    line_separator = request.args.get('line_separator', '')
+    timesplits = request.args.get('timesplits')
+    if timesplits:
+        timesplits = True
+    else:
+        timesplits = False
+
+    d = Document(url, line_separator, timesplits)
 
     response = app.make_response(d.text())
     response.mimetype = "text"

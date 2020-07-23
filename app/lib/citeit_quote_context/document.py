@@ -59,7 +59,7 @@ class Document:
         page_text = doc.text()
     """
 
-    def __init__(self, url	):
+    def __init__(self, url, line_separater='', timesplits=''):
         self.url = url  # user supplied URL, may be different from canonical
         self.num_downloads = 0  # count number of times the source is downloaded
         self.request_start = datetime.now()  # time how long request takes
@@ -71,6 +71,9 @@ class Document:
         self.error = ''
         self.language = ''
         self.content_type = ''
+        self.line_separater = line_separater
+        self.timesplits = timesplits
+
 
         self.request_dict = {
             'text': '',        # unicode
@@ -442,13 +445,15 @@ class Document:
 
     def supplemental_text(self):
 
-        url = self.url
         supplemental_text = ''
 
         media_provider = self.media_provider()
 
         if (media_provider == 'youtube'):
-            supplemental_text = youtube_transcript(url)
+            supplemental_text = youtube_transcript(self.url,
+                                                   self.line_separater,
+                                                   self.timesplits
+                                                  )
 
         elif (media_provider == 'vimeo'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
@@ -726,9 +731,25 @@ def youtube_video_id(value):
     return None
 
 
-def youtube_transcript(url):
+def youtube_transcript(url, line_separator='', timesplits=''):
+    from urllib.parse import urlparse, parse_qs
+    import itertools
+    import operator
+    import re
 
-    transcript_output = ''
+
+    transcript_output = []
+    deduplicated_output = ''
+    duplicate_cnt = 0
+
+    # Remove lines that contain the following phrases
+    bad_words = [
+                    "-->"               # Usage: 00:00:01.819 --> 00:00:01.829
+                    , "Language: en"
+                    , ": captions"
+                    , "WEBVTT"
+                    , "<c>"
+                ]
 
     ydl = youtube_dl.YoutubeDL(
         {   'writesubtitles': True,
@@ -743,17 +764,14 @@ def youtube_transcript(url):
     if res['requested_subtitles'] and res['requested_subtitles'][
         'en']:
         print('Grabbing vtt file from ' +
-              res['requested_subtitles']['en']['url'])
+              res['requested_subtitles']['en']['url']
+        )
         response = requests.get(
             res['requested_subtitles']['en']['url'],
             stream=True
         )
-        f1 = open("../transcripts/" + youtube_id + ".txt", "w")
 
         text = response.text
-
-        import itertools
-        import re
 
         # Remove Formatting: time & color ccodes
         # Credit: Alex Chan
@@ -789,15 +807,16 @@ def youtube_transcript(url):
         #
         #     <c.colorE5E5E5>
         #
-        text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
+
+        ###### text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
 
         # And any other timestamps, typically something like:
         #
         #    </c><00:00:00,539><c>
         #
         # with optional closing/opening tags.
-        text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
-                          '', text)
+        #######text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
+        #######                  '', text)
 
         # 00:00:03,500 --> 00:00:03,510
         text, _ = re.subn(
@@ -807,28 +826,70 @@ def youtube_transcript(url):
         # Now get the distinct lines.
         text = [line.strip() + " " for line in text.splitlines() if line.strip()]
 
+        # Credit: Hernan Pesantez: https://superuser.com/users/1162906/hernan-pesantez
+        # https://superuser.com/questions/927523/how-to-download-only-subtitles-of-videos-using-youtube-dl
+
         for line, _ in itertools.groupby(text):
-            transcript_output += line + " "
+            if not any(bad_word in line for bad_word in bad_words):
+                line = line.replace("&gt;", "")
+                line = line.replace("   ", " ")
+                line = line.replace("  ", " ")
+                line = line.strip() + " " + line_separator
 
-        transcript_output = transcript_output.replace("\n", " ")
-        transcript_output = transcript_output.replace(": captions", " ")
-        transcript_output = transcript_output.replace("Language: en", " ")
+                transcript_output.append(line)
 
-        transcript_output = transcript_output.replace("   ", " ")
-        transcript_output = transcript_output.replace("  ", " ")
-        transcript_output = transcript_output.replace("WEBVTT Kind", " ")
-        transcript_output = transcript_output.replace("WEBVTTKind", " ")
-        transcript_output = transcript_output.strip()
 
-        f1.write(transcript_output)
-        f1.close()
+        if settings.SAVE_DOWNLOADS_TO_FILE:
+            f1 = open("../transcripts/" + youtube_id + ".txt", "w")
+            f1.write(transcript_output)
+            f1.close()
 
         if len(res['subtitles']) > 0:
             print('manual captions')
         else:
             print('automatic_captions')
 
+
     else:
         print('Youtube Video does not have any english captions')
 
-    return transcript_output
+
+    # Check to see if lines are duplicated
+    line_counter = {}
+    counter_cnt = {}
+    deduplicated_output = []
+
+    # Count each line
+    for line in transcript_output:
+
+        if (line not in line_counter):
+            line_counter[line] = 1
+        else:
+            current_cnt = line_counter[line]
+            line_counter[line] = current_cnt + 1
+
+    # How many lines have each count
+    for line, cnt in line_counter.items():
+
+        if cnt not in counter_cnt:
+            counter_cnt[cnt] = 1
+        else:
+            counter_cnt[cnt] = counter_cnt[cnt] + 1
+
+    print("Max Count:")
+    max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
+    print(max_count)
+
+
+    # Regular Line Count
+    if (max_count == 1):
+        return "".join(transcript_output)
+
+    # Duplicate Lines Found
+    else:
+        print("duplicates found:", max_count)
+        for line_num, line in enumerate(transcript_output):
+            if (line_num%max_count) == 1:
+                deduplicated_output.append(line)
+
+        return "".join(deduplicated_output)
