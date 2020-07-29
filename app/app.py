@@ -24,6 +24,9 @@ import boto3
 import json
 import os
 
+import logging
+
+
 WEBSERVICE_VERSION = "0.4"
 
 
@@ -33,11 +36,26 @@ __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
 __license__ = "MIT"
 __version__ = WEBSERVICE_VERSION
 
+ADMINS = ['citeit@openpolitics.com']
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+
+logging.basicConfig(filename='error.log',level=logging.DEBUG)
+
+if not app.debug:
+    from logging.handlers import SMTPHandler
+
+    mail_handler = SMTPHandler(mailhost=('smtp.gmail.com', 465),
+                               fromaddr='citeit@openpolitics.com',
+                               toaddrs=ADMINS, subject='CiteIt Webserver Error',
+                               credentials=('citeit@openpolitics.com', 'FyP3LAYM2TcAQxFBxUbc2shX')
+                               )
+    mail_handler.setLevel(logging.ERROR)
+    app.logger.addHandler(mail_handler)
 
 
 @app.route('/about')
@@ -136,6 +154,7 @@ def post_url():
                 saved_citations[c.data['sha256']] = c.data['citing_quote']
                 print(c.data['sha256'], ' ', c.data['hashkey'], ' ', c.data['citing_quote'])
 
+            print("File Uploaded")
 
     return jsonify(saved_citations)
 
