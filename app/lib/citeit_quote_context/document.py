@@ -33,11 +33,6 @@ import youtube_dl
 from bs4 import BeautifulSoup  # convert html > text
 
 
-
-FOLDER_SEPARATOR = "%2"
-PDF_PREFIX = "../downloads/"
-
-
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
@@ -200,9 +195,7 @@ class Document:
 
             Idea: https://github.com/skylander86/lambda-text-extractor
         """
-        pdf_prefix = "../downloads/"
         doc_type = self.doc_type()
-
 
         if (doc_type == 'html'):
             print("HTML text()")
@@ -300,10 +293,10 @@ class Document:
 
                             print("Page: " + str(pageNum))
 
-                            output_filename_page = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
+                            output_filename_page = '../downloads/pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
                                 pageNum).zfill(4) + '.txt'
 
-                            output_filename_complete = pdf_prefix + 'pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
+                            output_filename_complete = '../downloads/pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
 
                             # Use OCR to convert image > text
                             text = pytesseract.image_to_string(imgBlob, language)
@@ -454,12 +447,11 @@ class Document:
                                                    self.line_separater,
                                                    self.timesplits
                                                   )
-
         elif (media_provider == 'vimeo'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
 
         elif (media_provider == 'oyez.org'):
-            supplemental_text = oyez_transcript(url)
+            supplemental_text = oyez_transcript(self.url)
 
         return supplemental_text
 
@@ -526,7 +518,7 @@ class Document:
         canonical_path = urllib.parse.quote_plus(self.canonical_url_without_protocol())
 
         # Example '../downloads/html/avalon.law.yale.edu/19th_century/jeffauto.asp'#
-        original_file_path = PDF_PREFIX + self.doc_type() + '/' + canonical_path
+        original_file_path = '../downloads/' + self.doc_type() + '/' + canonical_path
 
         return original_file_path
 
@@ -732,34 +724,51 @@ def youtube_video_id(value):
 
 
 def youtube_transcript(url, line_separator='', timesplits=''):
-    from urllib.parse import urlparse, parse_qs
+    """
+        Check to see if transcript was already downloaded and cached
+        If not, query the YouTube API and parse the response into a transcript
+            - remove formatting and time codes
+            - a future version could create a format that includes time signatures
+    """
     import itertools
     import operator
     import re
+    import os
 
-
+    transcript_content = ''
     transcript_output = []
     deduplicated_output = ''
     duplicate_cnt = 0
+    content_file = ""
+
+    youtube_id = youtube_video_id(url)
+    transcript_filename = '../downloads/transcripts/youtube/' + youtube_id + '.txt'
+
+    # Was this YouTube Transcript already downloaded?  If so, return cache.
+    if os.path.exists(transcript_filename):
+        with open(transcript_filename, 'r') as content_file:
+            transcript_content = content_file.read()
+
+        print("Returning cached transcript: " + transcript_filename)
+        return transcript_content
+
+    # Download YouTube Transcript from API
+    ydl = youtube_dl.YoutubeDL(
+        {'writesubtitles': True,
+         'allsubtitles': True,
+         'writeautomaticsub': True
+        }
+    )
+    res = ydl.extract_info(url, download=False)
 
     # Remove lines that contain the following phrases
-    bad_words = [
-                    "-->"               # Usage: 00:00:01.819 --> 00:00:01.829
+    remove_words = [
+                    "-->"               #   Usage: 00:00:01.819 --> 00:00:01.829
                     , "Language: en"
                     , ": captions"
                     , "WEBVTT"
                     , "<c>"
                 ]
-
-    ydl = youtube_dl.YoutubeDL(
-        {   'writesubtitles': True,
-            'allsubtitles': True,
-            'writeautomaticsub': True
-        }
-    )
-
-    res = ydl.extract_info(url, download=False)
-    youtube_id = youtube_video_id(url)
 
     if res['requested_subtitles'] and res['requested_subtitles'][
         'en']:
@@ -830,7 +839,7 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         # https://superuser.com/questions/927523/how-to-download-only-subtitles-of-videos-using-youtube-dl
 
         for line, _ in itertools.groupby(text):
-            if not any(bad_word in line for bad_word in bad_words):
+            if not any(remove_word in line for remove_word in remove_words):
                 line = line.replace("&gt;", "")
                 line = line.replace("   ", " ")
                 line = line.replace("  ", " ")
@@ -838,17 +847,10 @@ def youtube_transcript(url, line_separator='', timesplits=''):
 
                 transcript_output.append(line)
 
-
-        if settings.SAVE_DOWNLOADS_TO_FILE:
-            f1 = open("../transcripts/" + youtube_id + ".txt", "w")
-            f1.write(transcript_output)
-            f1.close()
-
         if len(res['subtitles']) > 0:
             print('manual captions')
         else:
             print('automatic_captions')
-
 
     else:
         print('Youtube Video does not have any english captions')
@@ -876,20 +878,24 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         else:
             counter_cnt[cnt] = counter_cnt[cnt] + 1
 
-    print("Max Count:")
     max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
-    print(max_count)
-
 
     # Regular Line Count
     if (max_count == 1):
-        return "".join(transcript_output)
+        transcript_output =  "".join(transcript_output)
 
     # Duplicate Lines Found
     else:
-        print("duplicates found:", max_count)
+        print("De-duplicate transcripts:", max_count)
         for line_num, line in enumerate(transcript_output):
             if (line_num%max_count) == 1:
                 deduplicated_output.append(line)
 
-        return "".join(deduplicated_output)
+        transcript_output = "".join(deduplicated_output)
+
+    print("create/write file: " + transcript_filename)
+    if settings.SAVE_DOWNLOADS_TO_FILE:
+        transcript_output = "".join(transcript_output)
+        f1 = open(transcript_filename, "w+")  # create file if it doesn't exist
+        f1.write(transcript_output)
+        f1.close()
