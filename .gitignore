@@ -1,9 +1,12 @@
 venv/
 *.pyc
 
-app/settings_secret.py
 downloads/*
+app/settings_secret.py
 text-versions/*
+transcripts/*
+app/citeit-webservice.log
+
 
 citeit.env
 api.env

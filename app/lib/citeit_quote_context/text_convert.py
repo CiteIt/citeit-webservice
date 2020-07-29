@@ -45,6 +45,11 @@ def escape_text(str):
     for char in str:
         if (ord(char) not in settings.TEXT_ESCAPE_CODE_POINTS):
             str_return = str_return + char
+
+    # Replace Hex escaped characters
+    for special_char in settings.ESCAPE_SPECIAL_CHARS:
+        str_return = str_return.replace(special_char, '')
+
     return str_return
 
 
