@@ -17,7 +17,7 @@ __version__ = "0.4"
 from bs4 import BeautifulSoup
 import difflib
 import settings
-
+import re
 
 class TextConvert:
     """ Remove the following characters from a string.
@@ -39,16 +39,35 @@ def html_to_text(html_str):
     return soup.get_text()
 
 
-def escape_text(str):
+def escape_text(str, escape_hex=True):
     """Remove characters from the string"""
     str_return = ''
-    for char in str:
-        if (ord(char) not in settings.TEXT_ESCAPE_CODE_POINTS):
-            str_return = str_return + char
 
-    # Replace Hex escaped characters
-    for special_char in settings.ESCAPE_SPECIAL_CHARS:
-        str_return = str_return.replace(special_char, '')
+    # Filter out str characters with Unicode code points
+    if settings.TEXT_ESCAPE_CODE_POINTS:
+        for char in str:
+            if (ord(char) not in settings.TEXT_ESCAPE_CODE_POINTS):
+                str_return = str_return + char
+
+    # Filter out specific characters
+    if settings.ESCAPE_SPECIAL_CHARS:
+        for special_char in settings.ESCAPE_SPECIAL_CHARS:
+            str_return = str_return.replace(special_char, '')
+
+    # Filter out characters matching a specific pattern
+    if escape_hex:
+
+        # Examples of Characters to match and remove:
+        # '\u00e2\u0080\u009d',   # "â"
+        # '\u00e2\u0080\u009c',   # LEFT DOUBLE QUOTATION MARK
+        # '\u00e2\u0080\u0093',   # DASH
+        # '\u00e2\u0080\u00a6',   # BROKEN BAR
+        # '\u00e2\u0080\u0098',   # LEFT SINGLE QUOTATION
+        # '\u00e2\u0080\u0099',   # RIGHT SINGLE QUOTATION
+
+        # Create Regex pattern to match unicode escape stored in 3-bytes
+        hexaPattern = re.compile(r'[\xc2-\xf4][\x80-\xbf]+')
+        str_return = re.sub(hexaPattern, '', str_return)  # remove unicode hex characters
 
     return str_return
 

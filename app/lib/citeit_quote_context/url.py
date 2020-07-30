@@ -120,11 +120,11 @@ class URL:
         result_list = []
         citations_list_dict = self.citations_list_dict()
         pool = Pool(processes=settings.NUM_DOWNLOAD_PROCESSES)
-        #try:
-        result_list = pool.map(load_quote_data, citations_list_dict)
-        #except ValueError:
-        #    # TODO: add better error handling
-        #    print("Skipping map value ..")
+        try:
+            result_list = pool.map(load_quote_data, citations_list_dict)
+        except (NameError, ValueError):
+            # TODO: add better error handling
+            print("Skipping map value ..")
         pool.close()
         pool.join()
         return result_list
