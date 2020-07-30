@@ -847,6 +847,19 @@ def youtube_transcript(url, line_separator='', timesplits=''):
 
                 transcript_output.append(line)
 
+        transcript_output = transcript_output.replace("   ", " ")
+        transcript_output = transcript_output.replace("  ", " ")
+        transcript_output = transcript_output.replace("WEBVTT Kind", " ")
+        transcript_output = transcript_output.replace("WEBVTTKind", " ")
+        transcript_output = transcript_output.strip()
+
+
+        if settings.SAVE_DOWNLOADS_TO_FILE:
+            f1 = open("../transcripts/" + youtube_id + ".txt", "w")
+            f1.write(transcript_output)
+            f1.close()
+
+
         if len(res['subtitles']) > 0:
             print('manual captions')
         else:
@@ -899,3 +912,6 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         f1 = open(transcript_filename, "w+")  # create file if it doesn't exist
         f1.write(transcript_output)
         f1.close()
+
+    return transcript_output
+
