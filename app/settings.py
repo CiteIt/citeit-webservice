@@ -20,6 +20,9 @@ VERSION_NUM = os.getenv('VERSION_NUM', '0.4')
 logger=logging.getLogger()
 logger.setLevel(logging.DEBUG) 
 
+JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
+SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost/database_name'
+
 SAVE_DOWNLOADS_TO_FILE = True
 #############################################################################################################################
 # Certain Unicode characters can cause problems with the hash

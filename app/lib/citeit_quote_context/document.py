@@ -27,6 +27,7 @@ import re
 import timeit
 import settings
 import tldextract
+import os
 
 import youtube_dl
 
@@ -140,13 +141,21 @@ class Document:
             doc_type = self.doc_type()
             print("DocType::: " + doc_type)
 
+
             if (settings.SAVE_DOWNLOADS_TO_FILE):
+
+                # Create Directory if it doesn't exist
+                dirname = os.path.dirname(self.filename_original())
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+
+                # Write contents to file
                 if (self.content_type.startswith('text')):
                     open(self.filename_original(), 'w').write(r.text)   # text or html
                 else:
                     open(self.filename_original(), 'wb').write(self.content)  # binary
 
-            print("Saved original: " + self.filename_original() )
+            print("Saved original: " + self.filename_original())
             print('Content-Type: ' + self.content_type)
             print('Language:     ' + self.language)
             print('Length: ' + str(len(r.content)))
@@ -643,24 +652,52 @@ def get_domain(public_url):
     domain = '{uri.netloc}'.format(uri=parsed_uri)
     return domain
 
-def oyez_public_json(public_apps_url):
+def oyez_case_id(public_apps_url):
     # Lookup case_id from apps url and return api url
     json_url = ''
 
     # Make sure the domain is Oyez:
     ext = tldextract.extract(public_apps_url)
+
     if (ext.domain == 'oyez' and ext.suffix == 'org'):
         case_id = re.match('.*?([0-9]+)$', public_apps_url).group(1)
+        return case_id
+    else:
+        print("NOT: oyez.org")
+        return ""
+
+def oyez_public_json(public_apps_url):
+    # Lookup case_id from apps url and return api url
+
+    case_id = oyez_case_id(public_apps_url)
+
+    if (len(str(case_id)) > 0):
         json_url = 'https://api.oyez.org/case_media/oral_argument_audio/' + case_id
     else:
         print("NOT: oyez.org")
+        json_url = ""
 
     return json_url
 
-
 def oyez_transcript(public_url):
     # Convert public json url to text transcript
+    case_id = oyez_case_id(public_url)
     json_url = oyez_public_json(public_url)
+
+    transcript_filename = '../downloads/transcripts/oyez.org/' + case_id + '.txt'
+
+    # Does a Parent Directory Exist for file Cache?
+    dirname = os.path.dirname(transcript_filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    # Was this YouTube Transcript already downloaded?  If so, return cache.
+    if os.path.exists(transcript_filename):
+        with open(transcript_filename, 'r') as content_file:
+            transcript_content = content_file.read()
+
+        print("Returning cached transcript: " + transcript_filename)
+        return transcript_content
 
     if (len(json_url) == 0):
         print("NOT: " + json_url)
@@ -693,6 +730,12 @@ def oyez_transcript(public_url):
                         section_num = section_num + 1
 
                     turn_num = turn_num + 1
+
+        if settings.SAVE_DOWNLOADS_TO_FILE:
+            output = "".join(output)
+            f1 = open(transcript_filename, "w+")  # create file if it doesn't exist
+            f1.write(output)
+            f1.close()
 
         return output
 
@@ -907,6 +950,7 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         transcript_output = "".join(deduplicated_output)
 
     print("create/write file: " + transcript_filename)
+
     if settings.SAVE_DOWNLOADS_TO_FILE:
         transcript_output = "".join(transcript_output)
         f1 = open(transcript_filename, "w+")  # create file if it doesn't exist

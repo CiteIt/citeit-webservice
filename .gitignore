@@ -1,24 +1,23 @@
-venv/
+venv/  # virutal host
 *.pyc
 
-downloads/*
-app/settings_secret.py
-text-versions/*
-transcripts/*
-app/citeit-webservice.log
-
-
-citeit.env
+citeit.env  # Docker environmental variable settings
 api.env
 
 docker-command.txt
+app/citeit-webservice.log
 
-json/quote/sha256/*
-*.DS_Store
+text-versions/*
+downloads/*            # copies of original sources: HTML, PDF; Text versions & Transcripts 
 
-.idea/* 
-.idea/codeStyles/codeStyleConfig.xml
-.idea/inspectionProfiles/Project_Default.xml
+json/quote/sha256/*    # JSON snippets to upload
+
+app/settings_secret.py  # Passwords
+app/aws_settings.py
+
+venv/*
 aws_policy.json
 
-app/aws_settings.py
+*.DS_Store
+.idea/* 
+
