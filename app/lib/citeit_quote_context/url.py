@@ -12,6 +12,7 @@ from lib.citeit_quote_context.quote import Quote
 from bs4 import BeautifulSoup
 from functools import lru_cache
 from multiprocessing import Pool
+from collections import Counter
 import time
 import settings
 
@@ -71,44 +72,57 @@ class URL:
         """ The class only supports 'html' document types now,
             but could expand to include pdf, word docs and text
         """
-        return 'html'  # hard-coded.  Todo: pdf, doc, docx, text
-
-    def citation_url_text(self):
-        """ Returns a dictionary of:
-                url and
-                quote text
-            from all blockquote and q tags on this page
-        """
-        print("Getting URLs")
-        cite_urls = {}
-        soup = BeautifulSoup(self.html(), 'html.parser')
-        for cite in soup.find_all(['blockquote', 'q']):
-            if cite.get('cite'):
-                cite_urls[cite.get('cite')] = cite.text
-        return cite_urls
-
-    def citation_urls(self):
-        """ Returns a list of the urls that have been cited """
-        urls = []
-        for url, text in self.citation_url_text().items():
-            urls.append(url)
-        return urls
+        return self.doc().doc_type()
 
     def citations_list_dict(self):
         """ Create list of quote dictionaries
             to be passed to map function.  Data is supplied
-            from urls and text specified in citing
+            from urls and text specified in the citing
             document's blockquote and 'cite' attribute."""
+
+        # print("Getting URLs")
         citations_list_dict = []
-        for cited_url, citing_quote in self.citation_url_text().items():
-            quote = {}
-            quote['citing_quote'] = citing_quote
-            quote['citing_url'] = self.url
-            quote['citing_text'] = self.text
-            quote['citing_raw'] = self.raw()
-            quote['cited_url'] = cited_url
+        soup = BeautifulSoup(self.html(), 'html.parser')
+
+        # Get all blockquote and q tags
+        for cite in soup.find_all(['blockquote', 'q']):
+            # print("Beautiful Soup: ", cite.get('cite'), cite.text)
+            if cite.get('cite'):
+                quote = {}
+                quote['citing_quote'] = cite.text
+                quote['citing_url'] = self.url
+                quote['citing_text'] = self.text
+                quote['citing_raw'] = self.raw()
+                quote['cited_url'] = cite.get('cite')
+
             citations_list_dict.append(quote)
         return citations_list_dict
+
+    def citation_urls(self):
+        """ Returns a list of the urls that have been cited """
+        urls = []
+        for quote in self.citations_list_dict():
+            urls.append(quote['cited_url'])
+
+        return urls
+
+    def citations_list_duplicates(self):
+        """
+            Test whether a url has been cited multiple times
+            Returns a list of duplicate_urls so that these urls can be
+            pre-fetched so that the same page isn't clobbered
+            (fetched multiple times in parallel)
+        """
+        duplicate_counter = {}
+        duplicate_urls = []
+
+        urls = self.citation_urls()
+        duplicate_counter = Counter(urls)
+        for cited_url, count in duplicate_counter.items():
+            if count > 1:
+                duplicate_urls.append(cited_url)
+
+        return duplicate_urls
 
     def citations(self):
         """ Return a list of Quote Lookup results for all citations on this page
@@ -118,13 +132,22 @@ class URL:
             using python 'map' function
         """
         result_list = []
+
+        # Pre-fetch and cache URL if it is found in more than one quote
+        # this prevents sources from being clobbered with multiple requests in parallel
+        for url in self.citations_list_duplicates():
+            d = Document(url)
+            d.download_resource()  # request and cache result so parallel requests come from cache
+
+        # Load Quote data in parallel:
         citations_list_dict = self.citations_list_dict()
+
         pool = Pool(processes=settings.NUM_DOWNLOAD_PROCESSES)
-        try:
-            result_list = pool.map(load_quote_data, citations_list_dict)
-        except (NameError, ValueError):
-            # TODO: add better error handling
-            print("Skipping map value ..")
+        # try:
+        result_list = pool.map(load_quote_data, citations_list_dict)
+        # except (NameError, ValueError):
+        # TODO: add better error handling
+        # print("Skipping map value ..")
         pool.close()
         pool.join()
         return result_list
@@ -136,7 +159,7 @@ class URL:
 def load_quote_data(quote_keys):
     """ lookup quote data, from keys """
     print("Downloading citation for: " + quote_keys['citing_quote'])
-
+    print("Downloading citation url: " + quote_keys['cited_url'])
     quote = Quote(
                  quote_keys['citing_quote'],
                  quote_keys['citing_url'],
