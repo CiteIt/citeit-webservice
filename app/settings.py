@@ -1,11 +1,11 @@
 import os
+import sys
 import logging
 
 
 logging.basicConfig(filename="citeit-webservice.log", 
                     format='%(asctime)s %(message)s', 
                     filemode='w') 
-
 
 logger=logging.getLogger() 
 logger.setLevel(logging.DEBUG) 
@@ -55,9 +55,12 @@ ESCAPE_SPECIAL_CHARS = [
 
 NUM_DOWNLOAD_PROCESSES = 5
 
+# aws_setting is stored in grandparent path
+sys.path.append(os.path.abspath('../../'))
+
 try:
     # Are Settings supplied by an included Amazon file?
-    import aws_settings
+    import aws_settings  # path: (../../aws_settings.py)
 
     AMAZON_ACCESS_KEY = aws_settings.AMAZON_ACCESS_KEY
     AMAZON_SECRET_KEY = aws_settings.AMAZON_SECRET_KEY
