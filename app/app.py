@@ -10,17 +10,16 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
-from flask import make_response
 from urllib import parse        # check if url is valid
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.quote import Quote
+from lib.citeit_quote_context.misc.utils import publish_file
 import urllib3
 import hashlib
 import settings
-import boto3
 import json
 import os
 
@@ -118,33 +117,24 @@ def post_url():
             quote_json['cited_quote'] = c.data['cited_quote']
             quote_json['hashkey'] = c.data['hashkey']
 
-            # Save JSON to local file
-            print("Saving Json locally ..")
+            # Setting up Json settings locally ..
             json_file = json.dumps(quote_json)
             json_filename = ''.join([c.data['sha256'], '.json'])
             json_full_filepath = os.path.join(settings.JSON_FILE_PATH, json_filename)
-            print("Full Filepath x1: " + json_full_filepath)
-            with open(json_full_filepath, 'w+') as f:
-                f.write(json_file)
 
-            print("Saving Json to S3 ..")
+            # Setting up Json settings with Cloud"
             shard = json_filename[:2]
             remote_path= ''.join(["quote/sha256/0.4/", str(shard), "/", json_filename])
             print("JSON Path: " + json_file)
             print("Remote path: " + remote_path)
 
-            # Upload JSON to Amazon S3
-            session = boto3.Session(
-                aws_access_key_id=settings.AMAZON_ACCESS_KEY,
-                aws_secret_access_key=settings.AMAZON_SECRET_KEY
-            )
-            
-            s3 = session.resource('s3')
-            s3.meta.client.upload_file(
-                Filename=json_full_filepath,
-                Bucket=settings.AMAZON_S3_BUCKET,
-	        Key=remote_path,
-	        ExtraArgs={'ContentType':"application/json", 'ACL': "public-read"},
+            # Publish JSON to Cloud, save copy locally
+            publish_file(
+                '',
+                json_file,
+                json_full_filepath,
+                remote_path,
+                "application/json"
             )
 
             if (format == 'list'):

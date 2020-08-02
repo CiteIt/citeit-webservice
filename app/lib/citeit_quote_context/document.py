@@ -10,6 +10,8 @@
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.canonical_url import url_without_protocol
+from lib.citeit_quote_context.misc.utils import publish_file
+from lib.citeit_quote_context.misc.utils import fix_encoding
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -87,6 +89,8 @@ class Document:
     @lru_cache(maxsize=500)
     def download_resource(self):
 
+        text = '' # default to empty string
+
         # Was this file already downloaded?
         if (len(self.content_type) >= 1) :
             print("ALREADY DOWNLOADED.")
@@ -141,19 +145,17 @@ class Document:
             doc_type = self.doc_type()
             print("DocType::: " + doc_type)
 
-
             if (settings.SAVE_DOWNLOADS_TO_FILE):
+                local_filename = self.filename_original()
+                remote_path = ''.join(["archive/", self.canonical_url()])
 
-                # Create Directory if it doesn't exist
-                dirname = os.path.dirname(self.filename_original())
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-
-                # Write contents to file
-                if (self.content_type.startswith('text')):
-                    open(self.filename_original(), 'w').write(r.text)   # text or html
-                else:
-                    open(self.filename_original(), 'wb').write(self.content)  # binary
+                publish_file(
+                    self.url,
+                    text,
+                    local_filename,
+                    remote_path,
+                    self.content_type
+                )
 
             print("Saved original: " + self.filename_original())
             print('Content-Type: ' + self.content_type)
@@ -226,14 +228,26 @@ class Document:
             html_text = text + '\n\n' + self.supplemental_text()
             html_text = html_text.strip()
 
+            # Save a copy of this file: Archive locally and to Cloud
             if (settings.SAVE_DOWNLOADS_TO_FILE):
-                open(self.filename_text(), 'w').write(html_text)
+                local_filename = ''.join(["../transcripts/", self.filename_text()])
+                remote_path = ''.join(["transcript/", self.filename_text()])
+
+                publish_file(
+                    self.url,
+                    html_text,
+                    local_filename,
+                    remote_path,
+                    'text/plain'
+                )
 
             return html_text
 
         elif (doc_type == 'pdf'):
             # example: https://demo.citeit.net/2020/06/30/well-behaved-women-seldom-make-history-original-pdf/
             # quoted source: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
+
+            start_time = timeit.default_timer()
 
             try:
                 import pdftotext  # convert pdf > text without using ocr
@@ -247,7 +261,7 @@ class Document:
             print("Filename original: " + filename_original)
             print("Filename:    text: " + filename_text)
 
-            if (settings.SAVE_DOWNLOADS_TO_FILE):
+            if (settings.PDF_ENABLED):
                 with open(filename_original, 'rb') as f:
                     pdf = pdftotext.PDF(f)
 
@@ -268,18 +282,26 @@ class Document:
 
             pdf_text = "\n\n".join(pdf)  # Combine text into single string
             pdf_text = pdf_text.strip()
+            pdf_text = fix_encoding(pdf_text)
 
-            if (settings.SAVE_DOWNLOADS_TO_FILE):
+            if (settings.PDF_ENABLED):
                 # Digital PDF with digitally extractable text: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
                 if (len(pdf_text) > 0):
-                    print("Saving digital pdf text version to: " + filename_text)
-                    open(filename_text, 'w').write(pdf_text)
+                    local_filename = self.filename_text()
+                    remote_path = ''.join(["transcript/pdf/", self.filename_text()])
+
+                    publish_file(
+                        self.url,
+                        pdf_text,
+                        local_filename,
+                        remote_path,
+                        'text/plain'
+                    )
 
                     return pdf_text
 
                 # OCR: Generate text version from scanned doc using OCR (more CPU intensive)
                 else:  # example: https://faculty.washington.edu/rsoder/EDLPS579/DostoevskyGrandInquisitor.pdf
-                    start_time = timeit.default_timer()
 
                     try:
                         from pdf2image import convert_from_path
@@ -294,6 +316,8 @@ class Document:
                     pdfs = glob.glob(filename_original)
                     print("PDF globs")
 
+                    filename_complete = urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
+
                     for original_pdf_path in pdfs:
                         pages = convert_from_path(filename_original, 500)
                         print("PDFs converted.  Now enumerating ..")
@@ -301,35 +325,44 @@ class Document:
                         for pageNum, imgBlob in enumerate(pages):
 
                             print("Page: " + str(pageNum))
-
-                            output_filename_page = '../downloads/pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(
-                                pageNum).zfill(4) + '.txt'
-
-                            output_filename_complete = '../downloads/pdf/' + urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt"
+                            filename_page = urllib.parse.quote_plus(self.canonical_url_without_protocol()) + ".txt" + '@@-page-' + str(pageNum).zfill(4) + '.txt'
 
                             # Use OCR to convert image > text
                             text = pytesseract.image_to_string(imgBlob, language)
+                            text = fix_encoding(text)
+
                             pdf_output = pdf_output + ' ' + text
 
-                            # Write individual file:
+                            # Write individual page:
                             if (settings.SAVE_DOWNLOADS_TO_FILE):
-                                print(output_filename_page)
-                                with open(output_filename_page, 'w') as the_file:
-                                    the_file.write(text)
+                                local_filename = ''.join(["../downloads/pdf/", filename_page])
+                                remote_path = ''.join(["transcript/pdf/", filename_page])
 
+                                publish_file(
+                                    self.url,
+                                    text,
+                                    local_filename,
+                                    remote_path,
+                                    'text/plain'
+                                )
+
+                    # Write Entire Text to file
                     if (settings.SAVE_DOWNLOADS_TO_FILE):
-                        # Write Entire Text to file
-                        with open(output_filename_complete, 'w') as the_file:
-                            the_file.write(pdf_output)
+                        local_filename = ''.join(["../downloads/pdf/", filename_complete])
+                        remote_path = ''.join(["transcript/pdf/", filename_complete])
+
+                        publish_file(
+                            self.url,
+                            pdf_output,
+                            local_filename,
+                            remote_path,
+                            'text/plain'
+                        )
 
             # takes roughly 90 minutes (16 seconds per page)
             print("The time difference is :",
                   timeit.default_timer() - start_time)
 
-            if ('â€™' in pdf_output) or ('â€' in pdf_output) or ('â€œ' in pdf_output):
-                pdf_output = pdf_output.encode("Windows-1252").force_encoding("UTF-8")
-
-            return pdf_output
 
         elif (doc_type == 'json'):
             print("SUPPLEMENTAL TEXT()")
@@ -424,18 +457,18 @@ class Document:
 
         # YouTube
         if (ext.domain == 'youtube' and ext.suffix == 'com'):
-            return 'youtube'
+            return 'youtube.com'
 
         elif (ext.domain == 'youtu' and ext.suffix == 'be'):
-            return 'youtube'
+            return 'youtube.com'
 
         # Vimeo
         elif (ext.domain == 'vimeo' and ext.suffix == 'com'):
-            return 'vimeo'
+            return 'vimeo.com'
 
         # Soundcloud
         elif (ext.domain == 'soundcloud' and ext.suffix == 'com'):
-            return 'soundcloud'
+            return 'soundcloud.com'
 
         # OYEZ : Supereme Court Transcripts
         elif (ext.domain == 'oyez' and ext.suffix == 'org'):
@@ -451,12 +484,12 @@ class Document:
 
         media_provider = self.media_provider()
 
-        if (media_provider == 'youtube'):
+        if (media_provider == 'youtube.com'):
             supplemental_text = youtube_transcript(self.url,
                                                    self.line_separater,
                                                    self.timesplits
                                                   )
-        elif (media_provider == 'vimeo'):
+        elif (media_provider == 'vimeo.com'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
 
         elif (media_provider == 'oyez.org'):
@@ -532,7 +565,7 @@ class Document:
         return original_file_path
 
     def filename_text(self):
-        return self.filename_original() + '.txt'
+        return self.canonical_url_without_protocol() + '.txt'
 
 
     @lru_cache(maxsize=500)
@@ -543,9 +576,9 @@ class Document:
         data['canonical_url'] = self.canonical_url()
         data['citeit_url'] = self.citeit_url()
         data['doc_type'] = self.doc_type()
-        data['language'] = self.language()
+        data['language'] = self.language
 
-        data['encoding'] = self.encoding()
+        data['encoding'] = self.encoding
         data['request_start'] = self.request_start
         data['request_stop'] = self.request_stop
         data['elapsed_time'] = str(self.elapsed_time())
@@ -684,7 +717,7 @@ def oyez_transcript(public_url):
     case_id = oyez_case_id(public_url)
     json_url = oyez_public_json(public_url)
 
-    transcript_filename = '../downloads/transcripts/oyez.org/' + case_id + '.txt'
+    transcript_filename = '../downloads/transcripts/custom/oyez.org/' + case_id + '.txt'
 
     # Does a Parent Directory Exist for file Cache?
     dirname = os.path.dirname(transcript_filename)
@@ -732,10 +765,17 @@ def oyez_transcript(public_url):
                     turn_num = turn_num + 1
 
         if settings.SAVE_DOWNLOADS_TO_FILE:
-            output = "".join(output)
-            f1 = open(transcript_filename, "w+")  # create file if it doesn't exist
-            f1.write(output)
-            f1.close()
+            local_filename = transcript_filename
+            remote_path = ''.join(['transcript/oyez.org/', case_id , '.txt'])
+            url = "https://read.citeit.net/" + remote_path
+
+            publish_file(
+                url,
+                output,
+                local_filename,
+                remote_path,
+                'text/plain'
+            )
 
         return output
 
@@ -785,7 +825,7 @@ def youtube_transcript(url, line_separator='', timesplits=''):
     content_file = ""
 
     youtube_id = youtube_video_id(url)
-    transcript_filename = '../downloads/transcripts/youtube/' + youtube_id + '.txt'
+    transcript_filename = '../downloads/transcripts/custom/youtube.com/' + youtube_id + '.txt'
 
     # Was this YouTube Transcript already downloaded?  If so, return cache.
     if os.path.exists(transcript_filename):
@@ -890,6 +930,7 @@ def youtube_transcript(url, line_separator='', timesplits=''):
 
                 transcript_output.append(line)
 
+        # TODO: fix transcript_output: make string
         transcript_output = transcript_output.replace("   ", " ")
         transcript_output = transcript_output.replace("  ", " ")
         transcript_output = transcript_output.replace("WEBVTT Kind", " ")
@@ -898,10 +939,16 @@ def youtube_transcript(url, line_separator='', timesplits=''):
 
 
         if settings.SAVE_DOWNLOADS_TO_FILE:
-            f1 = open("../transcripts/" + youtube_id + ".txt", "w")
-            f1.write(transcript_output)
-            f1.close()
+            local_filename = "../transcripts/" + youtube_id + ".txt"
+            remote_path = ''.join(['transcript/custom/youtube.com/', youtube_id , '.txt'])
 
+            publish_file(
+                self.url,
+                transcript_output,
+                local_filename,
+                remote_path,
+                'text/plain'
+            )
 
         if len(res['subtitles']) > 0:
             print('manual captions')
@@ -957,5 +1004,15 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         f1.write(transcript_output)
         f1.close()
 
-    return transcript_output
+        local_filename = transcript_filename
+        remote_path = ''.join(['transcript/custom/youtube.com/', youtube_id, '.txt'])
 
+        publish_file(
+            self.url,
+            transcript_output,
+            local_filename,
+            remote_path,
+            'text/plain'
+        )
+
+    return transcript_output

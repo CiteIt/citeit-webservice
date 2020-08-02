@@ -20,6 +20,8 @@ VERSION_NUM = os.getenv('VERSION_NUM', '0.4')
 logger=logging.getLogger()
 logger.setLevel(logging.DEBUG) 
 
+PDF_ENABLED = False
+
 JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
 SQLALCHEMY_DATABASE_URI = 'postgresql://username:password@localhost/database_name'
 
