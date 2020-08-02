@@ -21,3 +21,5 @@ aws_policy.json
 *.DS_Store
 .idea/* 
 
+downloads
+transcripts/
