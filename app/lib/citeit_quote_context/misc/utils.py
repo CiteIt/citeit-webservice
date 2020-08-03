@@ -4,6 +4,9 @@ import requests
 import gzip
 import os
 
+from langdetect import detect
+
+
 def fix_encoding(str):
     # If certain characters are found in the input, switch encoding
     output = str
@@ -69,3 +72,60 @@ def add_archive_job_to_queue(url):
     # r = requests.get('https://web.archive.org/save/?url='+ url)
     # r = requests.post('https://web.archive.org/save', data={'url': url})
     print("submit archive request to job queue")
+
+
+def get_from_cache(filename):
+
+    # Default return dict
+    content_dict = {
+       'text': '',      # unicode
+       'unicode':  '',
+       'content':  '',  # raw
+       'encoding': '',
+       'error': '',
+       'language': '',
+       'content_type': ''
+    }
+
+    # Get the Gzip version of the file
+    filename, file_extension = os.path.splitext(filename)
+    if (file_extension != '.gz'):
+        filename = filename + '.gz'
+
+    # Does a Parent Directory Exist for file Cache?
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    # Was this File already downloaded?  If so, return from cache.
+    if os.path.exists(filename):
+        with open(filename, 'r') as content_file:
+            file_content = filename.read()
+
+            # Unzip file contents:
+            file_content = gzip.decompress(file_content)
+
+            # Detect Encoding
+            blob = open(file_content, 'rb').read()
+            m = magic.open(magic.MAGIC_MIME_ENCODING)
+            m.load()
+            encoding = m.buffer(blob)
+
+            # Get Language
+            language = detect(file_content)
+
+            # Get Content Type
+            mime = magic.Magic(mime=True)
+            content_type = mime.from_file(file_content)  # 'application/pdf'
+
+            content_dict = {
+                'text': file_content,        # unicode
+                'unicode': file_content,
+                'content': file_content,     # raw
+                'encoding': encoding,
+                'error':  '',
+                'language': language,
+                'content_type': content_type
+            }
+
+    return content_dict

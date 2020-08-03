@@ -12,6 +12,7 @@ from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.canonical_url import url_without_protocol
 from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import fix_encoding
+from lib.citeit_quote_context.misc.utils import get_from_cache
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -30,6 +31,7 @@ import timeit
 import settings
 import tldextract
 import os
+import magic
 
 import youtube_dl
 
@@ -72,7 +74,6 @@ class Document:
         self.line_separater = line_separater
         self.timesplits = timesplits
 
-
         self.request_dict = {
             'text': '',        # unicode
             'unicode': '',
@@ -92,10 +93,17 @@ class Document:
         text = '' # default to empty string
 
         # Was this file already downloaded?
-        if (len(self.content_type) >= 1) :
+        if (len(self.content_type) >= 1):
             print("ALREADY DOWNLOADED.")
             return self.request_dict
 
+        # Is the file cached locally?
+        file_dict = get_from_cache(self.filename_original())
+        if (len(file_dict['text']) > 0):
+            self.request_dict = file_dict
+            return file_dict['text']
+
+        # --------- Download file from internet -------------
         try:
             self.increment_num_downloads()
             error = ''
@@ -148,13 +156,23 @@ class Document:
             if (settings.SAVE_DOWNLOADS_TO_FILE):
                 local_filename = self.filename_original()
                 remote_path = ''.join(["archive/", self.canonical_url()])
+                content_type = self.content_type
+                if not content_type:
+                    content_type = 'text/html'
+
+                # Add file extension if there is none
+                filename, file_extension = os.path.splitext(remote_path)
+                if not ((file_extension == '.html') or (file_extension == '.htm')):
+                    remote_path = remote_path + '/index.html'
+                else:
+                    remote_path = remote_path + '.' + doc_type
 
                 publish_file(
                     self.url,
                     text,
                     local_filename,
                     remote_path,
-                    self.content_type
+                    content_type
                 )
 
             print("Saved original: " + self.filename_original())
@@ -262,11 +280,16 @@ class Document:
             print("Filename:    text: " + filename_text)
 
             if (settings.PDF_ENABLED):
-                with open(filename_original, 'rb') as f:
-                    pdf = pdftotext.PDF(f)
+                file_dict = get_from_cache(filename)
+                file_contents = file_dict['text']
+
+                with open(file_contents, 'rb') as f:
+                    pdf = pdftotext.PDF(file_contents)
 
             """
-            // Credit: https://pypi.org/project/pdftotext/
+            // Get other Pages:
+             
+            Credit: https://pypi.org/project/pdftotext/
             
             # How many pages?
             print(len(pdf))
@@ -485,10 +508,11 @@ class Document:
         media_provider = self.media_provider()
 
         if (media_provider == 'youtube.com'):
-            supplemental_text = youtube_transcript(self.url,
-                                                   self.line_separater,
-                                                   self.timesplits
-                                                  )
+            supplemental_text = youtube_transcript(
+                self.url,
+                self.line_separater,
+                self.timesplits
+        )
         elif (media_provider == 'vimeo.com'):
             supplemental_text = "Vimeo transcripts not yet implemented. (See document.supplemental_text() )"
 
@@ -560,7 +584,8 @@ class Document:
         canonical_path = urllib.parse.quote_plus(self.canonical_url_without_protocol())
 
         # Example '../downloads/html/avalon.law.yale.edu/19th_century/jeffauto.asp'#
-        original_file_path = '../downloads/' + self.doc_type() + '/' + canonical_path
+        # original_file_path = '../downloads/' + self.doc_type() + '/' + canonical_path
+        original_file_path = '../downloads/' + canonical_path
 
         return original_file_path
 
@@ -719,23 +744,14 @@ def oyez_transcript(public_url):
 
     transcript_filename = '../downloads/transcripts/custom/oyez.org/' + case_id + '.txt'
 
-    # Does a Parent Directory Exist for file Cache?
-    dirname = os.path.dirname(transcript_filename)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    # Was this YouTube Transcript already downloaded?  If so, return cache.
-    if os.path.exists(transcript_filename):
-        with open(transcript_filename, 'r') as content_file:
-            transcript_content = content_file.read()
-
-        print("Returning cached transcript: " + transcript_filename)
+    file_dict = get_from_cache(transcript_filename)
+    transcript_content = file_dict['text']
+    if len(transcript_content) > 0:
         return transcript_content
 
     if (len(json_url) == 0):
         print("NOT: " + json_url)
         return ''
-
     else:
         print("OYEZ JSON: " + json_url)
 
@@ -827,192 +843,179 @@ def youtube_transcript(url, line_separator='', timesplits=''):
     youtube_id = youtube_video_id(url)
     transcript_filename = '../downloads/transcripts/custom/youtube.com/' + youtube_id + '.txt'
 
-    # Was this YouTube Transcript already downloaded?  If so, return cache.
-    if os.path.exists(transcript_filename):
-        with open(transcript_filename, 'r') as content_file:
-            transcript_content = content_file.read()
-
-        print("Returning cached transcript: " + transcript_filename)
+    file_dict = get_from_cache(transcript_filename)
+    transcript_content = file_dict['text']
+    if len(transcript_content) > 0:
         return transcript_content
 
-    # Download YouTube Transcript from API
-    ydl = youtube_dl.YoutubeDL(
-        {'writesubtitles': True,
-         'allsubtitles': True,
-         'writeautomaticsub': True
-        }
-    )
-    res = ydl.extract_info(url, download=False)
-
-    # Remove lines that contain the following phrases
-    remove_words = [
-                    "-->"               #   Usage: 00:00:01.819 --> 00:00:01.829
-                    , "Language: en"
-                    , ": captions"
-                    , "WEBVTT"
-                    , "<c>"
-                ]
-
-    if res['requested_subtitles'] and res['requested_subtitles'][
-        'en']:
-        print('Grabbing vtt file from ' +
-              res['requested_subtitles']['en']['url']
+    else:
+        # Download YouTube Transcript from API
+        ydl = youtube_dl.YoutubeDL(
+            {'writesubtitles': True,
+             'allsubtitles': True,
+             'writeautomaticsub': True
+            }
         )
-        response = requests.get(
-            res['requested_subtitles']['en']['url'],
-            stream=True
-        )
+        res = ydl.extract_info(url, download=False)
 
-        text = response.text
+        # Remove lines that contain the following phrases
+        remove_words = [
+                        "-->"               #   Usage: 00:00:01.819 --> 00:00:01.829
+                        , "Language: en"
+                        , ": captions"
+                        , "WEBVTT"
+                        , "<c>"
+                    ]
 
-        # Remove Formatting: time & color ccodes
-        # Credit: Alex Chan
-        # Source: https://github.com/alexwlchan/junkdrawer/blob/d8ee4dee1b89181d114500b6e2d69a48e2a0e9c1/services/youtube/vtt2txt.py
+        if res['requested_subtitles'] and res['requested_subtitles'][
+            'en']:
+            print('Grabbing vtt file from ' +
+                  res['requested_subtitles']['en']['url']
+            )
+            response = requests.get(
+                res['requested_subtitles']['en']['url'],
+                stream=True
+            )
 
-        # Throw away the header, which is of the form:
-        #
-        #     WEBVTT
-        #     Kind: captions
-        #     Language: en
-        #     Style:
-        #     ::cue(c.colorCCCCCC) { color: rgb(204,204,204);
-        #      }
-        #     ::cue(c.colorE5E5E5) { color: rgb(229,229,229);
-        #      }
-        #     ##
-        #
+            text = response.text
 
-        #>>>>>>>>>>>text = text.split("##\n", 1)[1]
+            # Remove Formatting: time & color ccodes
+            # Credit: Alex Chan
+            # Source: https://github.com/alexwlchan/junkdrawer/blob/d8ee4dee1b89181d114500b6e2d69a48e2a0e9c1/services/youtube/vtt2txt.py
 
-        # Now throw away all the timestamps, which are typically of
-        # the form:
-        #
-        #     00:00:01.819 --> 00:00:01.829 align:start position:0%
-        #
-        text, _ = re.subn(
-            r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3} align:start position:0%\n',
-            '',
-            text
-        )
+            # Throw away the header, which is of the form:
+            #
+            #     WEBVTT
+            #     Kind: captions
+            #     Language: en
+            #     Style:
+            #     ::cue(c.colorCCCCCC) { color: rgb(204,204,204);
+            #      }
+            #     ::cue(c.colorE5E5E5) { color: rgb(229,229,229);
+            #      }
+            #     ##
+            #
 
-        # And the color changes, e.g.
-        #
-        #     <c.colorE5E5E5>
-        #
+            #>>>>>>>>>>>text = text.split("##\n", 1)[1]
 
-        ###### text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
+            # Now throw away all the timestamps, which are typically of
+            # the form:
+            #
+            #     00:00:01.819 --> 00:00:01.829 align:start position:0%
+            #
+            text, _ = re.subn(
+                r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3} align:start position:0%\n',
+                '',
+                text
+            )
 
-        # And any other timestamps, typically something like:
-        #
-        #    </c><00:00:00,539><c>
-        #
-        # with optional closing/opening tags.
-        #######text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
-        #######                  '', text)
+            # And the color changes, e.g.
+            #
+            #     <c.colorE5E5E5>
+            #
 
-        # 00:00:03,500 --> 00:00:03,510
-        text, _ = re.subn(
-            r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3}\n', '',
-            text)
+            ###### text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
 
-        # Now get the distinct lines.
-        text = [line.strip() + " " for line in text.splitlines() if line.strip()]
+            # And any other timestamps, typically something like:
+            #
+            #    </c><00:00:00,539><c>
+            #
+            # with optional closing/opening tags.
+            #######text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
+            #######                  '', text)
 
-        # Credit: Hernan Pesantez: https://superuser.com/users/1162906/hernan-pesantez
-        # https://superuser.com/questions/927523/how-to-download-only-subtitles-of-videos-using-youtube-dl
+            # 00:00:03,500 --> 00:00:03,510
+            text, _ = re.subn(
+                r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3}\n', '',
+                text)
 
-        for line, _ in itertools.groupby(text):
-            if not any(remove_word in line for remove_word in remove_words):
-                line = line.replace("&gt;", "")
-                line = line.replace("   ", " ")
-                line = line.replace("  ", " ")
-                line = line.strip() + " " + line_separator
+            # Now get the distinct lines.
+            text = [line.strip() + " " for line in text.splitlines() if line.strip()]
 
-                transcript_output.append(line)
+            # Credit: Hernan Pesantez: https://superuser.com/users/1162906/hernan-pesantez
+            # https://superuser.com/questions/927523/how-to-download-only-subtitles-of-videos-using-youtube-dl
 
-        # TODO: fix transcript_output: make string
+            for line, _ in itertools.groupby(text):
+                if not any(remove_word in line for remove_word in remove_words):
+                    line = line.replace("&gt;", "")
+                    line = line.replace("   ", " ")
+                    line = line.replace("  ", " ")
+                    line = line.strip() + " " + line_separator
+
+                    transcript_output.append(line)
+
+            if len(res['subtitles']) > 0:
+                print('manual captions')
+            else:
+                print('automatic_captions')
+
+        else:
+            print('Youtube Video does not have any english captions')
+
+
+        # Check to see if lines are duplicated
+        line_counter = {}
+        counter_cnt = {}
+        deduplicated_output = []
+
+        # Count each line
+        for line in transcript_output:
+
+            if (line not in line_counter):
+                line_counter[line] = 1
+            else:
+                current_cnt = line_counter[line]
+                line_counter[line] = current_cnt + 1
+
+        # How many lines have each count?
+        for line, cnt in line_counter.items():
+
+            if cnt not in counter_cnt:
+                counter_cnt[cnt] = 1
+            else:
+                counter_cnt[cnt] = counter_cnt[cnt] + 1
+
+        # Are lines being duplicated or triplicated at higher frequency that single lines?
+        max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
+
+        # Regular Line Count
+        if (max_count == 1):
+            transcript_output =  "".join(transcript_output)
+
+        # Duplicate Lines Found
+        else:
+            print("De-duplicate transcripts:", max_count)
+            for line_num, line in enumerate(transcript_output):
+                if (line_num%max_count) == 1:  # Get every n lines
+                    deduplicated_output.append(line)
+
+            transcript_output = "".join(deduplicated_output)
+
+
+        # Combine lines
+        transcript_output = "".join(transcript_output)
+
+        # Replace Special charachters
         transcript_output = transcript_output.replace("   ", " ")
         transcript_output = transcript_output.replace("  ", " ")
         transcript_output = transcript_output.replace("WEBVTT Kind", " ")
         transcript_output = transcript_output.replace("WEBVTTKind", " ")
         transcript_output = transcript_output.strip()
 
-
         if settings.SAVE_DOWNLOADS_TO_FILE:
+            print("create/write file: " + transcript_filename)
+
             local_filename = "../transcripts/" + youtube_id + ".txt"
             remote_path = ''.join(['transcript/custom/youtube.com/', youtube_id , '.txt'])
 
             publish_file(
-                self.url,
+                url,
                 transcript_output,
                 local_filename,
                 remote_path,
                 'text/plain'
             )
 
-        if len(res['subtitles']) > 0:
-            print('manual captions')
-        else:
-            print('automatic_captions')
-
-    else:
-        print('Youtube Video does not have any english captions')
-
-
-    # Check to see if lines are duplicated
-    line_counter = {}
-    counter_cnt = {}
-    deduplicated_output = []
-
-    # Count each line
-    for line in transcript_output:
-
-        if (line not in line_counter):
-            line_counter[line] = 1
-        else:
-            current_cnt = line_counter[line]
-            line_counter[line] = current_cnt + 1
-
-    # How many lines have each count
-    for line, cnt in line_counter.items():
-
-        if cnt not in counter_cnt:
-            counter_cnt[cnt] = 1
-        else:
-            counter_cnt[cnt] = counter_cnt[cnt] + 1
-
-    max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
-
-    # Regular Line Count
-    if (max_count == 1):
-        transcript_output =  "".join(transcript_output)
-
-    # Duplicate Lines Found
-    else:
-        print("De-duplicate transcripts:", max_count)
-        for line_num, line in enumerate(transcript_output):
-            if (line_num%max_count) == 1:
-                deduplicated_output.append(line)
-
-        transcript_output = "".join(deduplicated_output)
-
-    print("create/write file: " + transcript_filename)
-
-    if settings.SAVE_DOWNLOADS_TO_FILE:
-        transcript_output = "".join(transcript_output)
-        f1 = open(transcript_filename, "w+")  # create file if it doesn't exist
-        f1.write(transcript_output)
-        f1.close()
-
-        local_filename = transcript_filename
-        remote_path = ''.join(['transcript/custom/youtube.com/', youtube_id, '.txt'])
-
-        publish_file(
-            self.url,
-            transcript_output,
-            local_filename,
-            remote_path,
-            'text/plain'
-        )
-
     return transcript_output
+
+
