@@ -14,6 +14,7 @@ from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import fix_encoding
 from lib.citeit_quote_context.misc.utils import get_from_cache
 
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -87,10 +88,15 @@ class Document:
     def url(self):
         return self.url
 
+
+    def url_protocol_removed(self):
+        return url_without_protocol(self.url)
+
+
     @lru_cache(maxsize=500)
     def download_resource(self):
 
-        text = '' # default to empty string
+        text = ''  # default to empty string
 
         # Was this file already downloaded?
         if (len(self.content_type) >= 1):
@@ -98,7 +104,7 @@ class Document:
             return self.request_dict
 
         # Is the file cached locally?
-        file_dict = get_from_cache(self.filename_original())
+        file_dict = get_from_cache(self.url_protocol_removed())
         if (len(file_dict['text']) > 0):
             self.request_dict = file_dict
             return file_dict['text']
@@ -280,7 +286,7 @@ class Document:
             print("Filename:    text: " + filename_text)
 
             if (settings.PDF_ENABLED):
-                file_dict = get_from_cache(filename)
+                file_dict = get_from_cache(self.url_protocol_removed())
                 file_contents = file_dict['text']
 
                 with open(file_contents, 'rb') as f:
