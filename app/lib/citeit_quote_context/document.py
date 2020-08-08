@@ -982,7 +982,10 @@ def youtube_transcript(url, line_separator='', timesplits=''):
                 counter_cnt[cnt] = counter_cnt[cnt] + 1
 
         # Are lines being duplicated or triplicated at higher frequency that single lines?
-        max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
+        if (any(counter_cnt.values())):  # not empty
+            max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
+        else:
+            max_count = 0
 
         # Regular Line Count
         if (max_count == 1):
