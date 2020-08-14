@@ -148,7 +148,14 @@ class Document:
             self.encoding = r.encoding
             self.error = error
             self.language = detect(r.text) # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
-            self.content_type = r.headers['Content-Type']
+
+
+            if 'Content-Type' in r.headers.keys():
+                self.content_type = r.headers['Content-Type']
+            else:
+                self.content_type = 'application/html'
+                print(r.headers)    # TODO: Research why content-type is not always set
+
 
             print('Content-Type: ' + self.content_type)
             print('Language:     ' + self.language)
@@ -627,7 +634,10 @@ class Document:
         """ Returns character-encoding for requested document
         """
         resource = self.download_resource()
-        return resource['encoding'].lower()
+        if resource['encoding']:
+            return resource['encoding'].lower()
+        else:
+            return 'utf-8'  # TODO: Research if this is the proper default
 
     @lru_cache(maxsize=50)
     def language(self):
