@@ -187,7 +187,12 @@ class Quote:
         hash_text = self.hashkey()
         encoding = self.citing_doc().encoding_lookup()
         print("Encoding: " + encoding)
-        return hash_method(hash_text.encode(encoding)).hexdigest()
+
+        try:
+            hash = hash_method(hash_text.encode(encoding)).hexdigest()
+        except UnicodeEncodeError:
+            hash = ''   # TODO: research character encoding error
+        return hash
 
     def error(self):
         """

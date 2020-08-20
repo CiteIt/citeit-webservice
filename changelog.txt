@@ -1,0 +1,78 @@
+Aug 17, 2020: 0.4.7
+  * add permalink to blockquote and q tags to display context on non canonical pages (the home page, etc
+
+July 30, 2020: 0.4.6
+  * add "Right and Left Quotation" to Unicode Escape characters
+  * change style: q-tag link: double underline, remove border from quote arrows
+
+July 25, 2020: 0.4.5
+  * update dependency: bump lodaash from 4.17.15 to 44.17.19 in /lib/link-to-text-fragment
+  * format q-tag links and popup window
+  * add error handliniking to YouTube embed: url_parsed.params.start
+
+July 6, 2020: 0.4.4
+  * add Logic to Expand: YouTube Vimeo, and Soundcloud
+  * fix Quote-Context Arrows: remove border
+
+Jun 27, 2020: 0.4.3
+  * change version to 3-part number
+  * convert UTF-16 to UTF-8
+
+June 22, 2020: 0.4.2. xx
+  * change webservice submission url: http://api.citeit.net/v0.4/url/
+  * aadd forge-sha256 build
+  * update jQuery version to 3.4.1
+  * update forge-sha256
+
+June 19, 2020: 0.4.1 (0.64)
+  * update jsVideoURLParser    
+  * preserve html in TinyMCE editor quote selection
+	
+
+June 18, 2020 (0.63)
+ * format and document code
+ 
+
+June 13, 2020 (0.62)
+  * add function isWordpressPreview() to CiteIt-quote-context:
+    - detect if current URL is in preview mode
+    - remove querystring if in "preview" mode
+  * rename existing function names: use camel case
+  
+  https://github.com/CiteIt/citeit-wordpress/issues/11 
+  
+
+Jan 29, 2020 (0.61)
+  * cleanup CiteIt-quote-context  
+  * add <a class="quote_arrows">
+  
+  * switch toggle_quote to reference arrow anchor
+    rather than parent div
+
+  * CSS
+    - add <a class=‘quote_arrows’ to support styling
+    - change display to “block” to get rotate to work
+    - remove link outline from arrows
+    - add transform support for legacy browsers  
+  * make contextual popup appear on top: z-index: 9999
+  * rename neotext -> citeit
+
+
+Jan 25, 2020 (0.60)
+  * quote-context.php: register style, remove text/css attrib from style sheets
+  * enque style shee  
+  * fix validatio errors
+  * add toggleClass("rotated180");
+
+Jan 18, 2020:
+  * Escape Text using Unicode Codepoints 
+  * switch endpoint to: http://api.citeit.net
+  
+  
+Dec 20, 2020:
+  * Fix CSS: Inline Popup hides behind other Page Elements (#19)
+  * change z-index of jQuery Popup using .ui-front class
+  * this fixes #19
+  
+  
+See more: https://github.com/CiteIt/citeit-wordpress/commits/master
