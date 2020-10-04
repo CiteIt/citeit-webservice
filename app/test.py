@@ -21,10 +21,12 @@ from lib.citeit_quote_context.quote import Quote
 
 #print(q.hashkey())
 
-from ..lib.citeit_quote_context.document import Document
+from lib.citeit_quote_context.document import Document
 
 url = 'https://www.youtube.com/watch?v=Okg2LH6XKzY&feature=youtu.be'
 
 d = Document(url)
 
 text = d.text()
+
+print(text)

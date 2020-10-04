@@ -172,6 +172,8 @@ class Quote:
         citing_url = escape_url(self.citing_url())  # escape_url(self.citing_url_canonical())
         cited_url = escape_url(self.cited_url())
 
+        print("HASHKEY: ************ " + citing_quote + " ******************")
+
 
         return ''.join([
                     citing_quote, '|',                         # https://stackoverflow.com/questions/22601291/how-do-i-unescape-a-unicode-escaped-string-in-python
@@ -186,7 +188,8 @@ class Quote:
         hash_method = getattr(hashlib, HASH_ALGORITHM)
         hash_text = self.hashkey()
         encoding = self.citing_doc().encoding_lookup()
-        print("Encoding: " + encoding)
+        #encoding = 'ISO-8859-1'
+        print("Encoding: =========================== " + encoding + " ===================================")
 
         try:
             hash = hash_method(hash_text.encode(encoding)).hexdigest()

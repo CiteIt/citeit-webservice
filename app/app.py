@@ -17,6 +17,7 @@ from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.quote import Quote
 from lib.citeit_quote_context.misc.utils import publish_file
+from lib.citeit_quote_context.misc.utils import escape_json
 import urllib3
 import hashlib
 import settings
@@ -106,15 +107,15 @@ def post_url():
 
             # Set JSON values
             quote_json = {}
-            quote_json['citing_quote'] = c.data['citing_quote']
+            quote_json['citing_quote'] = escape_json(c.data['citing_quote'])
             quote_json['sha256'] = c.data['sha256']
             quote_json['citing_url'] = c.data['citing_url']
             quote_json['cited_url'] = c.data['cited_url']
-            quote_json['citing_context_before'] = c.data['citing_context_before']
-            quote_json['cited_context_before'] = c.data['cited_context_before']
-            quote_json['citing_context_after'] = c.data['citing_context_after']
-            quote_json['cited_context_after'] = c.data['cited_context_after']
-            quote_json['cited_quote'] = c.data['cited_quote']
+            quote_json['citing_context_before'] = escape_json(c.data['citing_context_before'])
+            quote_json['cited_context_before'] = escape_json(c.data['cited_context_before'])
+            quote_json['citing_context_after'] = escape_json(c.data['citing_context_after'])
+            quote_json['cited_context_after'] = escape_json(c.data['cited_context_after'])
+            quote_json['cited_quote'] = escape_json(c.data['cited_quote'])
             quote_json['hashkey'] = c.data['hashkey']
 
             # Setting up Json settings locally ..
@@ -148,14 +149,16 @@ def post_url():
 
     return jsonify(saved_citations)
 
+@app.route('/url/encoding', methods=['GET', 'POST'])
 @app.route('/v' + WEBSERVICE_VERSION + '/url/encoding', methods=['GET'])
 def url_encoding():
 
     citing_url = request.args.get('url', '')
     url = URL(citing_url)
-    return jsonify({'encoding': url.doc().encoding()})
+    #print(url.doc().encoding_lookup())
+    return jsonify({'encoding': url.doc().encoding_lookup()})
 
-
+@app.route('/url/hashkeys', methods=['GET', 'POST'])
 @app.route('/v' + WEBSERVICE_VERSION + '/url/hashkeys', methods=['GET'])
 def quote_hashkeys():
     # Get hashkey for each quote of URL:
@@ -175,20 +178,16 @@ def quote_hashkeys():
                     quote['cited_url']
         )
 
-        citing_quote = quote['citing_quote']  #q.citing_quote()
-        hashkey = q.hashkey()
-        quotes.append({citing_quote: quote['citing_text']})
+    citing_quote = quote['citing_quote']  #q.citing_quote()
+    hashkey = q.hashkey()
+    quotes.append({citing_quote: quote['citing_text']})
 
-        output = output + "\n\n" + hashkey
+    output = output + "\n\n" + hashkey
 
-    hash_method = getattr(hashlib, HASH_ALGORITHM)
+    # hash_method = getattr(hashlib, HASH_ALGORITHM)
     hash_text = hashkey
-    encoding = url.doc().encoding()
 
-    #return hash_method(hash_text.encode(encoding)).hexdigest()
-
-    return output   # jsonify(quotes)
-
+    return hash_text
 
 @app.route('/v' + WEBSERVICE_VERSION + '/url/canonical-url', methods=['GET'])
 def canonical_url():

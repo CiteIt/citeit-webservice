@@ -95,7 +95,8 @@ class URL:
                 quote['citing_raw'] = self.raw()
                 quote['cited_url'] = cite.get('cite')
 
-            citations_list_dict.append(quote)
+                citations_list_dict.append(quote)
+
         return citations_list_dict
 
     def citation_urls(self):

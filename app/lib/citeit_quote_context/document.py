@@ -13,11 +13,14 @@ from lib.citeit_quote_context.canonical_url import url_without_protocol
 from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import fix_encoding
 from lib.citeit_quote_context.misc.utils import get_from_cache
-
+from lib.citeit_quote_context.misc.utils import save_file_to_cloud
 
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from urllib.parse import urlparse
+
+from pathlib import Path
 
 import urllib
 from urllib.parse import urlparse
@@ -36,6 +39,7 @@ import magic
 
 import youtube_dl
 
+
 from bs4 import BeautifulSoup  # convert html > text
 
 
@@ -51,6 +55,7 @@ HEADERS = {
 }
 
 
+
 class Document:
     """ Look up url and compute plain-text version of document
         Use caching to prevent repeated re-querying
@@ -61,7 +66,14 @@ class Document:
     """
 
     def __init__(self, url, line_separater='', timesplits=''):
-        self.url = url  # user supplied URL, may be different from canonical
+
+        parsed = urlparse(url)
+        if (parsed.scheme and parsed.netloc):
+            self.url = url  # user supplied URL, may be different from canonical
+        else:
+            self.url =''
+
+
         self.num_downloads = 0  # count number of times the source is downloaded
         self.request_start = datetime.now()  # time how long request takes
         self.request_stop = None  # Datetime of last download
@@ -124,10 +136,23 @@ class Document:
 
             try:
                 r = session.get(url, headers=HEADERS, verify=False)
+
+            # Invalid URL
+            except requests.exceptions.MissingSchema:
+                return {
+                    'text': '',  # unicode
+                    'unicode': '',
+                    'content': '',  # raw
+                    'encoding': '',
+                    'error': "Connection refused",
+                    'language': '',
+                    'content_type': ''
+                }
+
             except requests.exceptions.ConnectionError:
                 # r.status_code = "Connection refused"
                 return {
-                    'text': '',              # unicode
+                    'text': '',       # unicode
                     'unicode': url,
                     'content': url,   # raw
                     'encoding': '',
@@ -141,7 +166,15 @@ class Document:
             print("Encoding: %s" % r.encoding )
             print("num downloads: " + str(self.num_downloads))
 
+            # Correct the Character Encoding
+
+
+            if url in self.url_encoding_hardcoded():
+                hardcoded_encoding = self.url_encoding_hardcoded()[url]
+                r.encoding = hardcoded_encoding
+
             text = r.text
+
             self.unicode = r.text
             self.content = r.content
 
@@ -162,31 +195,60 @@ class Document:
             print('Length: ' + str(len(self.content)))
             print("Attempting to save ..  ")
 
+            print(self.unicode)
+
+
             ####### Archive a Copy of the Original File ########
             doc_type = self.doc_type()
             print("DocType::: " + doc_type)
 
+            if (doc_type == 'pdf'):
+                text = r.content    # file contents
+
             if (settings.SAVE_DOWNLOADS_TO_FILE):
+                write_format = 'w'
+
                 local_filename = self.filename_original()
                 remote_path = ''.join(["archive/", self.canonical_url()])
                 content_type = self.content_type
                 if not content_type:
                     content_type = 'text/html'
 
+                # Create Directory if it doesn't exist
+                dirname = os.path.dirname(local_filename)
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+
+                if (content_type == 'application/pdf'):
+                    text = self.content
+                    write_format = 'wb'
+
+                # Archive file
+                print("ARCHIVE: local filename----------------------------------")
+                print(local_filename)
+
+                my_file = Path(local_filename)
+                if my_file.is_file():
+                    pass
+
+                else:
+                    try:
+                        with open(local_filename, write_format) as f:
+                            f.write(text)
+                    except IsADirectoryError:
+                        pass
+
                 # Add file extension if there is none
                 filename, file_extension = os.path.splitext(remote_path)
                 if not ((file_extension == '.html') or (file_extension == '.htm')):
-                    remote_path = remote_path + '/index.html'
+                    remote_path = os.path.splitext(remote_path)[0] + 'index.html'
+                    print("Remote path:")
+                    print(remote_path)
+
                 else:
                     remote_path = remote_path + '.' + doc_type
 
-                publish_file(
-                    self.url,
-                    text,
-                    local_filename,
-                    remote_path,
-                    content_type
-                )
+                save_file_to_cloud(local_filename, remote_path, content_type, 'gzip')
 
             print("Saved original: " + self.filename_original())
             print('Content-Type: ' + self.content_type)
@@ -252,7 +314,7 @@ class Document:
                 elem.extract()  # hide javascript, css, etc
             text = soup.get_text()
 
-            text = ftfy.fix_text(text)  # fix unicode problems
+            text = fix_encoding(text)
             text = convert_quotes_to_straight(text)
             text = normalize_whitespace(text)
 
@@ -278,6 +340,8 @@ class Document:
             # example: https://demo.citeit.net/2020/06/30/well-behaved-women-seldom-make-history-original-pdf/
             # quoted source: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
 
+            pdf = ''
+            pdf_text = ''
             start_time = timeit.default_timer()
 
             try:
@@ -287,21 +351,25 @@ class Document:
 
             print("Start PDF processing ..")
             filename_original = self.filename_original()
-            filename_text = self.filename_text()
 
-            print("Filename original: " + filename_original)
-            print("Filename:    text: " + filename_text)
+            pdf_text = ""
 
             if (settings.PDF_ENABLED):
-                file_dict = get_from_cache(self.url_protocol_removed())
-                file_contents = file_dict['text']
 
-                with open(file_contents, 'rb') as f:
-                    pdf = pdftotext.PDF(file_contents)
+                filename_complete = urllib.parse.quote_plus(self.canonical_url_without_protocol())
+                local_filename = ''.join(["../downloads/", filename_complete])
+
+                with open(local_filename, 'rb') as f:
+                    pdf = pdftotext.PDF(f)
+
+                pdf_text = "\n\n".join(pdf)  # Combine text into single string
+
+            pdf_text = pdf_text.strip()
+            pdf_text = fix_encoding(pdf_text)
 
             """
             // Get other Pages:
-             
+                 
             Credit: https://pypi.org/project/pdftotext/
             
             # How many pages?
@@ -316,15 +384,14 @@ class Document:
             print(pdf[1])
             """
 
-            pdf_text = "\n\n".join(pdf)  # Combine text into single string
-            pdf_text = pdf_text.strip()
-            pdf_text = fix_encoding(pdf_text)
-
             if (settings.PDF_ENABLED):
                 # Digital PDF with digitally extractable text: https://dash.harvard.edu/bitstream/handle/1/14123819/Vertuous%20Women%20Found.pdf
                 if (len(pdf_text) > 0):
                     local_filename = self.filename_text()
                     remote_path = ''.join(["transcript/pdf/", self.filename_text()])
+
+                    print("PUBLISH FILE (PDF):  " + local_filename)
+                    print("PUBLISH REMOTE PATH: " + remote_path )
 
                     publish_file(
                         self.url,
@@ -398,6 +465,8 @@ class Document:
             # takes roughly 90 minutes (16 seconds per page)
             print("The time difference is :",
                   timeit.default_timer() - start_time)
+
+            return pdf_text
 
 
         elif (doc_type == 'json'):
@@ -633,6 +702,10 @@ class Document:
     def encoding_lookup(self):
         """ Returns character-encoding for requested document
         """
+        if self.url in self.url_encoding_hardcoded():
+            hardcoded_encoding = self.url_encoding_hardcoded()[self.url]
+            return hardcoded_encoding
+
         resource = self.download_resource()
         if resource['encoding']:
             return resource['encoding'].lower()

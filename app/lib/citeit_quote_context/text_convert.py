@@ -57,6 +57,14 @@ def escape_text(str, escape_hex=True):
     # Filter out characters matching a specific pattern
     if escape_hex:
 
+        # Consider \u00e2\u0080\u0099 as a single character instead of 3 seperate
+        # https://patrickwu.space/2017/11/09/python-encoding-issue/
+        #str_return = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',
+        #                       lambda m: m.group(0).encode('latin1').decode(
+        #                           'utf8'), str_return)
+
+        pass
+
         # Examples of Characters to match and remove:
         # '\u00e2\u0080\u009d',   # "â"
         # '\u00e2\u0080\u009c',   # LEFT DOUBLE QUOTATION MARK
@@ -66,8 +74,8 @@ def escape_text(str, escape_hex=True):
         # '\u00e2\u0080\u0099',   # RIGHT SINGLE QUOTATION
 
         # Create Regex pattern to match unicode escape stored in 3-bytes
-        hexaPattern = re.compile(r'[\xc2-\xf4][\x80-\xbf]+')
-        str_return = re.sub(hexaPattern, '', str_return)  # remove unicode hex characters
+        # hexaPattern = re.compile(r'[\xc2-\xf4][\x80-\xbf]+')
+        # str_return = re.sub(hexaPattern, '', str_return)  # remove unicode hex characters
 
     return str_return
 

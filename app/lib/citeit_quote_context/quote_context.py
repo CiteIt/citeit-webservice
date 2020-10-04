@@ -33,14 +33,18 @@ class QuoteContext:
         text_output=True,	 # output computed text version of url's text
         prior_quote_context_length=500,  # length of excerpt before quote
         after_quote_context_length=500,  # length of excerpt after quote
-        starting_location_guess=None  # guess used by google diff_match_patch
+        starting_location_guess=0  # guess used by google diff_match_patch
     ):
         self.quote = normalize_text(quote)
         self.text = normalize_text(text)
         self.text_output = text_output
         self.prior_quote_context_length = prior_quote_context_length
         self.after_quote_context_length = after_quote_context_length
-        self.starting_location_guess = starting_location_guess
+
+        if starting_location_guess:
+            self.starting_location_guess = starting_location_guess
+        else:
+            self.starting_location_guess = 0
 
     def quote_length(self):
         """ length of specified quote """
@@ -76,10 +80,15 @@ class QuoteContext:
 
         # Guess a big distance so that starting guess location is unimportant
         quote_locate.Match_Distance = (self.text_length() * 2)  # Tweak this?
+
+        estimated_starting_location = 0
+        if self.estimated_starting_location():
+            estimated_starting_location = self.estimated_starting_location()
+
         quote_start_position = quote_locate.match_bitap(
             self.text,
             self.quote,
-            self.estimated_starting_location()
+            estimated_starting_location
         )
         if (quote_start_position >= 0):
             return quote_start_position
