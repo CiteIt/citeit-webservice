@@ -1251,6 +1251,13 @@ class diff_match_patch:
     Returns:
       Best match index or -1.
     """
+
+    # CiteIt Edit
+    if not text:
+      text =''
+    if not pattern:
+      pattern = ''
+
     # Python doesn't have a maxint limit, so ignore this check.
     #if self.Match_MaxBits != 0 and len(pattern) > self.Match_MaxBits:
     #  raise ValueError("Pattern too long for this application.")
@@ -1278,8 +1285,15 @@ class diff_match_patch:
 
     # Highest score beyond which we give up.
     score_threshold = self.Match_Threshold
+
     # Is there a nearby exact match? (speedup)
-    best_loc = text.find(pattern, loc)
+    # CiteIt Edit: error handling
+    if text:
+      best_loc = text.find(pattern, loc)
+    else:
+      best_loc = -1
+
+
     if best_loc != -1:
       score_threshold = min(match_bitapScore(0, best_loc), score_threshold)
       # What about in the other direction? (speedup)
@@ -1291,7 +1305,16 @@ class diff_match_patch:
     matchmask = 1 << (len(pattern) - 1)
     best_loc = -1
 
-    bin_max = len(pattern) + len(text)
+    # CiteIt Edit: error tracking
+    if pattern:
+      if text:
+        bin_max = len(pattern) + len(text)
+      else:
+        bin_max = len(pattern)
+    else:
+      if text:
+        bin_max = len(text)
+
     # Empty initialization added to appease pychecker.
     last_rd = None
     for d in range(len(pattern)):

@@ -702,6 +702,7 @@ class Document:
     def encoding_lookup(self):
         """ Returns character-encoding for requested document
         """
+
         if self.url in self.url_encoding_hardcoded():
             hardcoded_encoding = self.url_encoding_hardcoded()[self.url]
             return hardcoded_encoding
