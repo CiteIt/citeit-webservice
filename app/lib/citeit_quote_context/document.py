@@ -698,6 +698,10 @@ class Document:
 
         return data
 
+    def url_encoding_hardcoded(self):
+        url_encoding_hardcoded = []
+        return url_encoding_hardcoded
+
     @lru_cache(maxsize=500)
     def encoding_lookup(self):
         """ Returns character-encoding for requested document

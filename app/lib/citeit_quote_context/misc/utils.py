@@ -171,33 +171,46 @@ def get_from_cache(filename):
 
     # Was this File already downloaded?  If so, return from cache.
     if os.path.exists(filename):
-        with open(filename, 'r') as content_file:
-            file_content = filename.read()
 
-            # Unzip file contents:
-            # file_content = gzip.decompress(file_content)
+        try:
+            with open(filename, 'r') as content_file:
 
-            # Detect Encoding
-            blob = open(file_content, 'rb').read()
-            m = magic.open(magic.MAGIC_MIME_ENCODING)
-            m.load()
-            encoding = m.buffer(blob)
+                file_content = filename.read()
 
-            # Get Language
-            language = detect(file_content)
+                # Unzip file contents:
+                # file_content = gzip.decompress(file_content)
 
-            # Get Content Type
-            mime = magic.Magic(mime=True)
-            content_type = mime.from_file(file_content)  # 'application/pdf'
+                # Detect Encoding
+                blob = open(file_content, 'rb').read()
+                m = magic.open(magic.MAGIC_MIME_ENCODING)
+                m.load()
+                encoding = m.buffer(blob)
 
-            content_dict = {
-                'text': file_content,        # unicode
-                'unicode': file_content,
-                'content': file_content,     # raw
-                'encoding': encoding,
-                'error':  '',
-                'language': language,
-                'content_type': content_type
-            }
+                # Get Language
+                language = detect(file_content)
+
+                # Get Content Type
+                mime = magic.Magic(mime=True)
+                content_type = mime.from_file(file_content)  # 'application/pdf'
+
+        except IsADirectoryError:
+            # Todo: log exception
+
+            encoding = 'utf-8'
+            language = 'en'
+            content_type = 'application/html'
+            file_content = ''
+
+        content_dict = {
+            'text': file_content,        # unicode
+            'unicode': file_content,
+            'content': file_content,     # raw
+            'encoding': encoding,
+            'error':  '',
+            'language': language,
+            'content_type': content_type
+        }
+
+
 
     return content_dict
