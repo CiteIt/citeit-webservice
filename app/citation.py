@@ -39,6 +39,106 @@ class Citation:
 
     def db_save(self, debug=False):
         # Save Quote data to database, using SQLAlchemy
+        # Credit: https://gist.github.com/malexer/0647b208b2f1c48ec93e1bd157dc67c0
+
+        """
+
+        citation = Citation(id=session.data.sha256)
+        merged = session.merge(citation)
+        session.flush()
+
+
+        def update_citation(data, extended_data, tags)
+            citation_exists = db.session.query(Citations.id).filter_by(sha256=self.data.sha256).scalar() is not None
+
+            if citation_exists:
+                stmt = update(Citation).where(sha256 == self.data.sha256).\
+                       values(
+                            citing_url = self.data.citing_url
+                            citing_quote = self.data.citing_quote
+
+                            // can we pass a dictionary to an update?
+                       )
+            else:
+                citations.insert().values(name="some name")  # can we pass dictionary?
+
+
+            update_extended_data(extended_data)
+            update_citation_tag(citation_id, citation_tag_id)
+
+
+
+        def update_extended_data(extended_data)
+            pass
+
+
+        def update_citation_tag(citation_id, citation_tag_id)
+            pass
+
+
+
+        class Citation(Base):
+            __tablename__ = 'citation'
+
+            id = Column(BigInteger, primary_key=True)
+            sha256 = Column(String)
+            citing_url = Column(URLType)
+            citing_quote = Column(UnicodeText)
+            citing_context_before = Column(UnicodeText)
+            citing_context_after = Column(UnicodeText)
+            cited_url = Column(URLType)
+            cited_quote = Column(UnicodeText)
+            cited_context_before = Column(UnicodeText)
+            cited_context_after = Column(UnicodeText)
+            created = Column(DateTime)
+            updated = Column(DateTime)
+
+
+        class CitationTag(Base):
+            __tablename__ = 'citation_tag'
+            
+            id = Column(BigInteger, primary_key=True)            
+            citation_id = Column(BigInteger, primary_key=True)
+            citation_tag_id = Column(BigInteger, primary_key=True)
+            created = Column(DateTime)
+
+
+        class Tag(Base):
+            __tablename__ = 'tag'
+        
+            id = Column(BigInteger, primary_key=True)
+            tag = Column(Unicode)
+            created = Column(DateTime)
+
+
+        class Requests(Base):
+            __tablename__ = 'requests'
+
+            id = Column(BigInteger, primary_key=True)
+            request_url = Column(URLType)
+            request_type = Column(String)
+            duration = Column(Time)
+            created = Column(DateTime)
+            user_agent = Column(String)
+            ip_source = Column(IPAddressType)
+
+
+        class Document(Base):
+            __tablename__ = 'document'
+
+            id = Column(BigInteger, primary_key=True)
+            document_url = Column(URLType)
+            title = Column(Unicode)
+            body_html = Column(UnicodeText)
+            body_text = Column(UnicodeText)
+            content_type = Column(String)
+            encoding = Column(UnicodeText)
+            language = Column(UnicodeText)
+            created = Column(DateTime)
+            updated = Column(DateTime)
+
+        """
+
         if debug:
             print("Stub: saving to db ..")
 
