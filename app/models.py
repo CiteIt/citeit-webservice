@@ -7,150 +7,248 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-from sqlalchemy import Column, Integer, String, Numeric, UnicodeText, DateTime
-import datetime
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+from sqlalchemy import create_engine, MetaData, Table, \
+    Integer, BigInteger, LargeBinary, UnicodeText, String, Column, DateTime, \
+    PrimaryKeyConstraint, UniqueConstraint, Sequence, Index, ForeignKey
+
+from sqlalchemy_utils import EmailType, CountryType, ChoiceType, \
+    IPAddressType, PasswordType, URLType
 
 from sqlalchemy.ext.declarative import declarative_base
+
+from datetime import datetime
+import settings
+
+import pymsql
+pymysql.install_as_MySQLdb
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
 Base = declarative_base()
 
 
 class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    fullname = Column(String)
-    password = Column(String)
+    __tablename__ = 'user'
+
+    id = Column(Integer, primary_key=True)     # Sequence('user_id_seq')
+    email = Column(EmailType, nullable=False)
+    first_name = Column(String(25), nullable=True)
+    last_name = Column(String(35), nullable=True)
+    fullname = Column(String(75), nullable=True)
+    phone = Column(PhoneNumberType, nullable=True)
+    twitter = Column(String(35), nullable=True)
+    country = Column(CountryType, nullable=True)
+    timezone = Column(TimezoneType(backend='pytz'))
+    password = Column(PasswordType(
+        schemes=[
+            'pbkdf2_sha512',
+            'md5_crypt'
+        ],
+
+        deprecated=['md5_crypt']
+    ))
+    created = Column(DateTime(), default=datetime.now, nullable=False)
+    updated_on = Column(DateTime(), default=datetime.now, nullable=False, onupdate=datetime.now)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='user_pk'),
+        UniqueConstraint('email', name='user_email_unique')
+    )
 
     def __repr__(self):
-        return "<User(name='%s', fullname='%s', password='%s')>" % (
-            self.name,
-            self.fullname,
-            self.password
+        return "<User(email='%s', fullname='%s' )>" % (
+            self.email,
+            self.fullname
         )
+
 
 class Request(Base):
     REQUEST_TYPES = [
-        (u'post_url' = u'Post URL'),                                      # url
-        (u'get_posts_cited_by' = u'Get Posts Cited by this URL/Domain'),  # url, start_date, end_date, (default to latest), citation_terms, context_terms, tags, document_terms, search_type, max_results
-        (u'get_posts_citing' = u"Get Posts that Cite this URL"),          # url, start_date, end_date, (default to latest), citation_terms, context_terms, tags, document_terms, search_type, max_results
-        (u'get_archives_of_url' = 'Get Archive of URL'),                  # url, start_date, end_date, max_results 
+        (u'post-url', u'Post URL'),                                 # url
+        (u'posts-cited-by', u'Get Posts Cited by this URL/Domain'), # url, start_date, end_date, (default to latest), citation_terms, context_terms, tags, document_terms, search_type, max_results
+        (u'posts-citing', u'Get Posts that Cite this URL'),         # url, start_date, end_date, (default to latest), citation_terms, context_terms, tags, document_terms, search_type, max_results
+        (u'archives-of-url', u'Get Archive of URL'),                # url, start_date, end_date, max_results
+    ]
     SEARCH_TYPES = [
-        (u'url' = u'URL'),
-        (u'domain' = u'Domain (Strict)'),
-        (u'domain_subdomains' = u'Domain (Subdomains)')
+        (u'url', u'URL'),
+        (u'domain', u'Domain (Strict)'),
+        (u'domain-subdomains', u'Domain (Subdomains)')
     ]
 
-    id = Column(BigInteger(), primary_key=True)
-    ip_address = Column(IPAddressType)
-    request_type = Column(ChoiceTypes(REQUEST_TYPES))
-    search_type = Column(ChoiceTypes(SEARCH_TYPES))
-    request_date = Column(
+    __tablename__ = 'request'
+
+    id = Column(BigInteger(), Sequence('request_id_seq'))
+    ip_address = Column(IPAddressType, index=True, nullable=False)
+    request_type = Column(ChoiceType(REQUEST_TYPES))
+    url = Column(URLType, index=True, nullable=False)
+    user_agent = Column(String(8000), nullable=False)
+    created = Column(
         DateTime(timezone=True),
-        default=datetime.datetime.utcnow,
+        default=datetime.utcnow,
         nullable=False
     )
-    url = Column(String(2000), nullable=False)
-    citation_search_terms = Column(ARRAY(Unicode)), 
-    context_search_terms = Column(ARRAY(Unicode)), 
-    document_search_terms = Column(ARRAY(Unicode)),
-    tags= Column(ARRAY(Unicode)), 
-    start_date = (
-        DateTime(timezone=True),
-        nullable=True
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='request_pk'),
+        Index('request_ip_address_index', 'ip_address'),
+        Index('request_created_index', 'created'),
+        Index('request_url_index', 'url')
     )
-    end_date = (
-        DateTime(timezone=True),
-        nullable=True 
-    )
-    max_results = Column(Integer(), nullable=True)
-    elapsed_time = Column(Numeric(precision=5), nullable=False)
 
     def __repr__(self):
         return "<Request(id='%s', url='%s')>" % (
             self.id,
-            self.cited_url
+            self.url
         )
+
 
 class Document(Base):
-    __tablename__ = 'citeit_document'
-    
+    __tablename__ = 'document'
+
     id = Column(BigInteger(), primary_key=True)
-    sha256 = Column(String(64), nullable=False, unique=True)
-    domain_id = Column(Integer), nullable=False)
-    url = Column(String(2000), nullable=False)
-    title = Column(String(2000), nullable=False)
-    document_text = Column(UnicodeText)
-    encoding = Column(UnicodeText) 
-    word_count(Integer, null=False)
-    character_count(Integer, null=False)
-    download_date = Column(
+    # current_record = Column(Boolean, nullable=False)
+    request_id = Column(BigInteger(), ForeignKey('request.id'), index=True, nullable=False)
+    domain_id = Column(BigInteger(), index=True, nullable=False)
+    url = Column(URLType, index=True, nullable=False)
+    content_type = Column(String(50), nullable=False)
+    title = Column(String(256), nullable=True)
+    body_binary = Column(LargeBinary, nullable=True)
+    body_html = Column(UnicodeText, nullable=True)
+    body_text = Column(UnicodeText, default='')
+    encoding = Column(String(16), nullable=False)
+    word_count = Column(Integer, nullable=False)
+    character_count = Column(Integer, nullable=False)
+    created = Column(
         DateTime(timezone=True),
-        default=datetime.datetime.utcnow,
+        index=True,
+        default=datetime.utcnow,
         nullable=False
+    )
+    updated = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='document_pk'),
+        Index('document_request_id_index', 'request_id'),
+        Index('document_domain_id_index', 'domain_id'),
+        Index('document_url_index', 'created')
     )
 
     def __repr__(self):
-        return "<Document (id='%s', url='%s', title='%s'>" % (
+        return "<Document (id='%s', title='%s', url='%s',  >" % (
             self.id,
-            self.title
+            self.title,
+            self.url,
         )
 
 
-class Quote(Base):
-    __tablename__ = 'citeit_quote'
+class Citation(Base):
+    __tablename__ = 'citation'
 
     id = Column(BigInteger(), primary_key=True)
-    sha256 = Column(String(64), nullable=False, unique=True)
-    citing_url = Column(String(2000), nullable=False)
-    citing_url_canonical = Column(String(2000), nullable=False)
-    citing_quote = Column(UnicodeText(), nullable=False)
-    citing_quote_length = Column(Integer(), nullable=True)
-    citing_quote_start_position = Column(Integer(), nullable=True)
-    citing_quote_end_position = Column(Integer(), nullable=True)
-    citing_context_start_position = Column(Integer(), nullable=True)
-    citing_context_end_position = Column(Integer(), nullable=True)
+    request_id = Column(BigInteger(), ForeignKey('request.id'), index=True, nullable=False)
+    sha256 = Column(String(64), nullable=False, index=True, unique=True)
+
+    citing_url = Column(URLType, index=True, nullable=False)
+    citing_url_canonical = Column(URLType, index=True, nullable=False)
+    citing_quote = Column(UnicodeText(), index=True, nullable=False)
     citing_context_before = Column(UnicodeText)
     citing_context_after = Column(UnicodeText)
-    citing_text = Column(UnicodeText)
-    citing_doc_type = Column(String(4), default='html', nullable=True)
-    citing_raw = Column(UnicodeText, nullable=True)
-    citing_archive_url = Column(String(2000))
-    citing_cache_url = Column(String(2000))
-    citing_download_date = Column(
-        DateTime(timezone=True),
-        default=datetime.datetime.utcnow,
-        nullable=False
-    )
-    cited_url = Column(String(2000), nullable=False)
-    cited_citeit_url = Column(String(2000), nullable=False)
+
+    cited_url = Column(URLType, nullable=False)
     cited_quote = Column(UnicodeText(), nullable=True)
-    cited_quote_length = Column(Integer(), nullable=True)
-    cited_quote_start_position = Column(Integer(), nullable=True)
-    cited_quote_end_position = Column(Integer(), nullable=True)
-    cited_context_start_position = Column(Integer(), nullable=True)
-    cited_context_end_position = Column(Integer(), nullable=True)
     cited_context_before = Column(UnicodeText(), nullable=True)
     cited_context_after = Column(UnicodeText(), nullable=True)
-    cited_text = Column(UnicodeText(), nullable=True)
-    cited_doc_type = Column(String(4), default='html', nullable=True)
-    cited_raw = Column(UnicodeText(), nullable=True)
-    cited_archive_url = Column(String(2000), nullable=False)
-    cited_cache_url = Column(String(2000), nullable=False)
-    cited_download_date = Column(
+    created = Column(
         DateTime(timezone=True),
-        default=datetime.datetime.utcnow,
+        index=True,
+        default=datetime.utcnow,
         nullable=False
     )
-    create_date = Column(
-        DateTime(timezone=True),
-        default=datetime.datetime.utcnow,
-        nullable=False
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='citation_pk'),
+        UniqueConstraint('sha256', name='citation_sha256_unique'),
+        Index('document_request_id_index', 'request_id'),
+        Index('document_citing_url_index', 'citing_url'),
+        Index('document_citing_url_canonical_index', 'citing_url_canonical'),
+        Index('document_cited_url_index', 'cited_url'),
+        Index('document_created_index', 'created')
     )
-    create_elapsed_time = Column(Numeric(precision=5), nullable=False)
 
     def __repr__(self):
-        return "<Quote(id='%s', citing_text='%s')>" % (
+        return "<Citation(id='%s', citing_quote='%s', citing_url='%s')>" % (
             self.id,
-            self.citing_text
+            self.citing_quote,
+            self.citing_url
         )
 
+
+class Tag(Base):
+    __tablename__ = 'tag'
+
+    id = Column(BigInteger(), primary_key=True)
+    tag = Column(String(100), unique=True, nullable=False)
+    parent_id = Column(BigInteger(), ForeignKey('tag.id'), nullable=False)
+    created = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='tag_pk'),
+        UniqueConstraint('tag',name='unique_citation_tag'),
+        Index('tag_parent_id_index' 'tag', 'parent_id'),
+        Index('tag_created_index' 'created')
+    )
+
+    def __repr__(self):
+        return "<Tag(id='%s', tag='%s')>" % (
+            self.id,
+            self.tag
+        )
+
+
+class CitationTag(Base):
+    __tablename__ = 'citation_tag'
+
+    citation_id = Column(BigInteger(), ForeignKey('citation.id'), nullable=False)
+    tag_id = Column(BigInteger(), ForeignKey('tag.id'), nullable=False)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('citation_id', 'tag_id', name='citation_tag_pk'),
+        Index('citation_tag_citation_id', 'citation_id', 'citation_id'),
+        Index('citation_tag_tag_id', 'tag_id')
+    )
+
+    def __repr__(self):
+        return "<Tag(citation_id='%s', tag='%s')>" % (
+            self.citation_id,
+            self.tag_id,
+        )
+
+
+"""
+admin = User('admin@example.com','test-pasw**d')
+
+db.create_all() # In case user table doesn't exists already. Else remove it.
+
+db.session.add(admin)
+
+db.session.commit() # This is needed to write the changes to database
+
+User.query.all()
+
+User.query.filter_by(username='admin').first()
+"""
