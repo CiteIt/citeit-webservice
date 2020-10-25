@@ -20,6 +20,10 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from urllib.parse import urlparse
 
+# Used to Generate HTML from Javascript
+from requests_html import HTMLSession
+
+
 from pathlib import Path
 
 import urllib
@@ -65,7 +69,7 @@ class Document:
         page_text = doc.text()
     """
 
-    def __init__(self, url, line_separater='', timesplits=''):
+    def __init__(self, url, line_separater='', timesplits='', request_id=0):
 
         parsed = urlparse(url)
         if (parsed.scheme and parsed.netloc):
@@ -86,6 +90,7 @@ class Document:
         self.content_type = ''
         self.line_separater = line_separater
         self.timesplits = timesplits
+        self.request_id = request_id
 
         self.request_dict = {
             'text': '',        # unicode
@@ -94,7 +99,8 @@ class Document:
             'encoding': '',
             'error':  '',
             'language': '',
-            'content_type': ''
+            'content_type': '',
+            'request_id': self.request_id,
         }
 
     def url(self):
@@ -128,7 +134,9 @@ class Document:
             url = self.url
 
             # Use a User Agent to simulate what a Firefox user would see
-            session = requests.Session()
+            # session = requests.Sesson()
+            session = HTMLSession()
+
             retry = Retry(connect=5, backoff_factor=0.5)
             adapter = HTTPAdapter(max_retries=retry)
             session.mount('http://', adapter)

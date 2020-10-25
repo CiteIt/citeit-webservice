@@ -16,6 +16,10 @@ python-magic==0.4.18
 sqlalchemy-utils==0.36.8
 passlib==1.7.4
 pymysql==0.10.1:
+requests_html==0.10.0
+pyppdf==0.1.1
+
+
 
 # PDF libraries: don't work in Docker: Uncomment to run Flask directly in Python
 # pdftotext==2.1.4

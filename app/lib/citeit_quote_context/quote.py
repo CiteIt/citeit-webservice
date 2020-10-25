@@ -53,6 +53,7 @@ class Quote:
         cited_url_input,          # url of document that is being quoted
         citing_text_input='',     # optional: text from citing document
         citing_raw_input='',      # optional: raw content of citing document
+        request_id=0,             # ID of initial request to API
         text_output=True,   # output computed text version of url's html
         raw_output=True,    # output full html/pdf source of cited url
         prior_quote_context_length=500, # length of excerpt before quote
@@ -70,6 +71,7 @@ class Quote:
         self.prior_quote_context_length = prior_quote_context_length
         self.after_quote_context_length = after_quote_context_length
         self.starting_location_guess = starting_location_guess
+        self.request_id = request_id
 
     ######################## Citing Document ############################
 
@@ -83,7 +85,7 @@ class Quote:
     @lru_cache(maxsize=20)
     def citing_doc(self):
         """ Get Document of citing url """
-        return Document(self.citing_url())
+        return Document(self.citing_url(), self.request_id)
 
     def citing_doc_encoding(self):
         return self.citing_doc().encoding()
@@ -127,7 +129,7 @@ class Quote:
     @lru_cache(maxsize=20)
     def cited_doc(self):
         """ Get Document of cited url """
-        return Document(self.cited_url())
+        return Document(self.cited_url(), self.request_id)
 
     def cited_raw(self):
         """ Get text-version of citing document """
@@ -222,6 +224,7 @@ class Quote:
             'cited_url': self.cited_url(),    #  may be different from canonical
             'citing_url_canonical': self.citing_url_canonical(),
             'cited_url_canonical': self.cited_url_canonical(),
+            'request_id': self.request_id,
         }
 
         ######### LEFT OFF ##########

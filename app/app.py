@@ -94,11 +94,19 @@ def post_url():
     parsed_url = parse.urlparse(url_string)
     is_url = bool(parsed_url.scheme)
 
+
+
     # Lookup Citations for this URL and Save
     if not is_url:
         saved_citations['error'] = "Specify a valid URL of the form: https://api.citeit.net/?url=http://example.com/page_name"
     else:
+        # Save Request
+        # r = Request(url_string, 'I', request.user.user_agent)
+        # db.session.add(r)
+        # db.session.commit()
+
         url = URL(url_string)
+
         citations = url.citations()
         for n, citation in enumerate(citations):
             print(n, ": saving citation.")

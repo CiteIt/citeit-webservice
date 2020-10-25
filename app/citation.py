@@ -49,6 +49,7 @@ class Citation:
 
 
         def update_citation(data, extended_data, tags)
+
             citation_exists = db.session.query(Citations.id).filter_by(sha256=self.data.sha256).scalar() is not None
 
             if citation_exists:
@@ -111,13 +112,12 @@ class Citation:
             created = Column(DateTime)
 
 
-        class Requests(Base):
-            __tablename__ = 'requests'
+        class Request(Base):
+            __tablename__ = 'request'
 
             id = Column(BigInteger, primary_key=True)
             request_url = Column(URLType)
             request_type = Column(String)
-            duration = Column(Time)
             created = Column(DateTime)
             user_agent = Column(String)
             ip_source = Column(IPAddressType)

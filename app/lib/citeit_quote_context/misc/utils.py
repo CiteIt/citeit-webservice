@@ -16,6 +16,23 @@ def escape_json(str):
     return str #soup.text
 
 
+def save_citation(json_quote):
+
+    """
+    insert/update citation set
+        cited_context_after
+        cited_context_before
+        cited_quote
+        cited_url
+        citing_context_after
+        citing_quote
+        citing_url
+        hashkey
+        sha256
+    """
+
+
+
 def fix_url(url):
     # Credit: https://stackoverflow.com/questions/21659044/how-can-i-prepend-http-to-a-url-if-it-doesnt-begin-with-http
     # JBernardo: https://stackoverflow.com/users/754991/jbernardo
