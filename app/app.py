@@ -18,6 +18,15 @@ from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.quote import Quote
 from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import escape_json
+from models import Request
+from models import Domain
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.declarative import declarative_base
+
+
 import urllib3
 import hashlib
 import settings
@@ -43,6 +52,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+
+engine = create_engine(SA_URL(**settings.DB_URL))
+Base = declarative_base()
 
 logging.basicConfig(filename='error.log',level=logging.DEBUG)
 
@@ -83,37 +95,50 @@ def post_url():
         url_string = request.args.get('url', '')
         format = request.args.get('format', '')
 
-
     if (format == 'list'):
         saved_citations = []  # return full JSON list
     else:
         saved_citations = {}  # return summary dict: sha256: quote
 
-
     # Check if URL is of a valid format
     parsed_url = parse.urlparse(url_string)
     is_url = bool(parsed_url.scheme)
-
-
+    domain_url = parsed_url.netloc
 
     # Lookup Citations for this URL and Save
     if not is_url:
         saved_citations['error'] = "Specify a valid URL of the form: https://api.citeit.net/?url=http://example.com/page_name"
     else:
-        # Save Request
-        # r = Request(url_string, 'I', request.user.user_agent)
-        # db.session.add(r)
-        # db.session.commit()
+
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.ext.declarative import declarative_base
+
+        # create session
+        Session = sessionmaker()
+        Session.configure(bind=engine)
+        session = Session()
+
+        # Lookup Domain
+        domain = session.query(Domain).filter_by(domain_url=domain_url).first()
+        if not domain:          
+            domain = Domain(domain_url=domain_url)
+
+        # Save Request     
+        r = Request(ip_address=request.remote_addr, request_type='post-url', request_url=url_string, domain_id=domain.id, user_agent=request.headers.get('User-Agent') )
+        
+        session.add(r)
+        session.commit()
 
         url = URL(url_string)
 
+        # Get all citations on this page
         citations = url.citations()
         for n, citation in enumerate(citations):
             print(n, ": saving citation.")
             c = Citation(citation)  # lookup citation
             c.db_save()             # save citation to database
 
-            # Set JSON values
+            # Save JSON Context to file
             quote_json = {}
             quote_json['citing_quote'] = escape_json(c.data['citing_quote'])
             quote_json['sha256'] = c.data['sha256']

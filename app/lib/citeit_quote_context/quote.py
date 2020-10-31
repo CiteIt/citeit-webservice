@@ -19,8 +19,7 @@ from lib.citeit_quote_context.text_convert import escape_url
 from functools import lru_cache
 import hashlib
 import time
-
-HASH_ALGORITHM = 'sha256'
+import settings
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -88,7 +87,7 @@ class Quote:
         return Document(self.citing_url(), self.request_id)
 
     def citing_doc_encoding(self):
-        return self.citing_doc().encoding()
+        return self.citing_doc().encoding_lookup()
 
     def citing_raw(self):
         """ Get text-version of citing document """
@@ -187,11 +186,9 @@ class Quote:
         """
             Generate hash of the key, based on hash algorith (sha256)
         """
-        hash_method = getattr(hashlib, HASH_ALGORITHM)
+        hash_method = getattr(hashlib, settings.HASH_ALGORITHM)
         hash_text = self.hashkey()
-        encoding = self.citing_doc().encoding_lookup()
-        #encoding = 'ISO-8859-1'
-        print("Encoding: =========================== " + encoding + " ===================================")
+        encoding = self.citing_doc_encoding()
 
         try:
             hash = hash_method(hash_text.encode(encoding)).hexdigest()

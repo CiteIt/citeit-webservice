@@ -7,6 +7,7 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
+from models import Domain, Document  
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.canonical_url import url_without_protocol
@@ -40,6 +41,7 @@ import settings
 import tldextract
 import os
 import magic
+import hashlib
 
 import youtube_dl
 
@@ -122,6 +124,9 @@ class Document:
             return self.request_dict
 
         # Is the file cached locally?
+
+        # Does this already exist in database? ***************************************
+
         file_dict = get_from_cache(self.url_protocol_removed())
         if (len(file_dict['text']) > 0):
             self.request_dict = file_dict
@@ -280,6 +285,8 @@ class Document:
             'content_type': self.content_type
         }
 
+        # SAVE DB: TODO *********************************
+
         return self.request_dict
 
     def download_dict(self):
@@ -294,6 +301,44 @@ class Document:
         # return utf-8 content
         return self.download_resource()['text']  # default to blank string
 
+
+    def save_db(self):
+
+        # Count Words
+        text = self.text()
+        words = data.split()
+        word_count = len(words)
+
+        # Get Hash of Text Content: used to prevent duplicates
+        hash_method = getattr(hashlib, settings.HASH_ALGORITHM)
+        try:
+            content_hash = hash_method(text.encode(self.encoding)).hexdigest()
+        except UnicodeEncodeError:
+            content_hash = ''   # TODO: research character encoding error
+
+        # Insert Database Record if it doesn't exist
+        document_exists = db.session.query(Document.id).filter_by(content_hash=content_hash, url=self.url).scalar() is not None
+        if not document_exists:
+
+            # Lookup Domain ID
+            domain = db.query(Domain).filter_by(domain_url=domain_url).first()
+            if not domain:          
+                domain = Domain(domain_url=domain_url)
+
+            document.insert().values(
+                request_id = self.request_id
+                , domain_id = domain.id
+                , url = self.url
+                , content_type = self.content_type
+                , title = ''
+                , body_binary = self.content
+                , body_html = self.html()
+                , body_text = text
+                , encoding = self.encoding
+                , language = self.language
+                , word_count = word_count
+                , content_hash = content_hash
+            ) 
 
     @lru_cache(maxsize=500)
     def text(self):
