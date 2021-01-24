@@ -364,8 +364,9 @@ class Document:
 
                 pdf_text = "\n\n".join(pdf)  # Combine text into single string
 
-            pdf_text = pdf_text.strip()
-            pdf_text = fix_encoding(pdf_text)
+                if pdf_text:
+                    pdf_text = pdf_text.strip()
+                    pdf_text = fix_encoding(pdf_text)
 
             """
             // Get other Pages:
