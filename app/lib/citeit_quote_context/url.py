@@ -144,16 +144,26 @@ class URL:
         citations_list_dict = self.citations_list_dict()
 
         pool = Pool(processes=settings.NUM_DOWNLOAD_PROCESSES)
-        # try:
-        result_list = pool.map(load_quote_data, citations_list_dict)
-        # except (NameError, ValueError):
-        # TODO: add better error handling
-        # print("Skipping map value ..")
-        pool.close()
-        pool.join()
+        try:
+            result_list = pool.map(load_quote_data, citations_list_dict)
+        except (NameError, ValueError):
+            pass
+            # TODO: Add better error handling
+
+        finally:
+            pool.close()
+            pool.join()
+
+        # Debug: Don't use Pool to Parallelize
+        """
+        result_list = []
+        for c in citations_list_dict:
+            result = load_quote_data(c)
+            if result:
+                result_list.append(result)
+        """
+
         return result_list
-
-
 # ################## Non-class functions #######################
 
 
