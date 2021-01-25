@@ -101,14 +101,8 @@ class Request(Base):
     ip_address = Column(IPAddressType)
     request_type = Column(ChoiceType(REQUEST_TYPES))
     request_url = Column(URLType, nullable=False)
-    create_date = Column(
-        DateTime(timezone=True),
-        nullable=True
-    )
-    end_date = Column(
-        DateTime(timezone=True),
-        nullable=True 
-    )
+    create_date = Column(DateTime(), default=datetime.datetime.now, nullable=False)
+    update_date = Column(DateTime(), default=datetime.datetime.now, nullable=False, onupdate=datetime.datetime.now)
     elapsed_time = Column(Numeric(precision=5), nullable=False)
 
     #search_type = Column(ChoiceTypes(SEARCH_TYPES))
@@ -137,12 +131,8 @@ class Domain(Base):
     id = Column(BigInteger(), Sequence('document_id_seq'))  
     domain_url = Column(URLType, nullable=False)
     owner_user = Column(BigInteger(), ForeignKey('user.id'), index=True, nullable=False )
-    create_date = Column(
-        DateTime(timezone=True),
-        index=True,
-        default=datetime.datetime.utcnow,
-        nullable=False
-    )
+    create_date = Column(DateTime(), default=datetime.datetime.now, nullable=False)
+    update_date = Column(DateTime(), default=datetime.datetime.now, nullable=False, onupdate=datetime.datetime.now)
 
     __table_args__ = (
         PrimaryKeyConstraint('id', name='domain_pk'),
@@ -161,7 +151,7 @@ class Document(Base):
 
     id = Column(BigInteger(), Sequence('document_id_seq'))  
     request_id = Column(BigInteger(), ForeignKey('request.id'), index=True, nullable=False)
-    domain_id = Column(BigInteger(), nullable=False)
+    domain_id = Column(BigInteger(), ForeignKey('domain.id'), nullable=False)
     document_url = Column(URLType, nullable=False)
     content_type = Column(String(50), nullable=False)
     title = Column(String(256), nullable=True)
@@ -172,12 +162,8 @@ class Document(Base):
     language = Column(String(16), nullable=False)
     word_count = Column(Integer, nullable=False)
     content_hash = Column(String(64), nullable=False)
-    create_date = Column(
-        DateTime(timezone=True),
-        index=True,
-        default=datetime.datetime.utcnow,
-        nullable=False
-    )
+    create_date = Column(DateTime(), default=datetime.datetime.now, nullable=False)
+    update_date = Column(DateTime(), default=datetime.datetime.now, nullable=False, onupdate=datetime.datetime.now)
     end_date = Column(
         DateTime(timezone=True),
         index=True,
@@ -217,16 +203,11 @@ class Citation(Base):
 
     cited_domain_id = Column(BigInteger(), ForeignKey('domain.id'), index=True, nullable=False)
     cited_document = Column(BigInteger(), ForeignKey('document.id'), nullable=False)
-    cited_url = Column(String(2048), nullable=False)
-    cited_quote = Column(String(2048), nullable=False)
+    cited_url = Column(URLType, nullable=False)
+    cited_quote = Column(UnicodeText(), nullable=False)
     cited_context_before = Column(UnicodeText(), nullable=True)
     cited_context_after = Column(UnicodeText(), nullable=True)
-    create_date = Column(
-        DateTime(timezone=True),
-        index=True,
-        default=datetime.datetime.utcnow,
-        nullable=False
-    )
+    create_date = Column(DateTime(), default=datetime.datetime.now, nullable=False)
 
     __table_args__ = (
         PrimaryKeyConstraint('id', name='citation_pk'),
@@ -266,7 +247,49 @@ class Citation(Base):
         self.cited_context_before = cited_context_before 
         self.cited_context_after = cited_context_after 
 
+class Tag(Base):
+    __tablename__ = 'tag'
 
-Base.metadata.drop_all(engine)
-Base.metadata.create_all(engine)
+    id = Column(BigInteger(), Sequence('tag_id_seq'))
+    tag = Column(String(255), unique=True, nullable=False)
+    parent_id = Column(BigInteger(), ForeignKey('tag.id'), nullable=False)
+    create_date = Column(
+        DateTime(timezone=True),
+        default=datetime.datetime.utcnow,
+        nullable=False
+    )
+
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='tag_pk'),
+        UniqueConstraint('tag',name='citation_tag_unique'),
+        Index('tag_parent_id_index', 'tag', 'parent_id'),
+        Index('tag_created_index', 'create_date')
+    )
+
+    def __repr__(self):
+        return "<Tag(id='%s', tag='%s')>" % (
+            self.id,
+            self.tag
+        )
+
+class CitationTag(Base):
+    __tablename__ = 'citation_tag'
+
+    citation_id = Column(BigInteger(), ForeignKey('citation.id'), nullable=False)
+    tag_id = Column(BigInteger(), ForeignKey('tag.id'), nullable=False)
+
+    __table_args__ = (
+        PrimaryKeyConstraint('citation_id', 'tag_id', name='citation_tag_pk'),
+        Index('citation_tag_citation_id', 'citation_id', 'tag_id'),
+        Index('citation_tag_tag_id', 'tag_id', 'citation_id')
+    )
+
+    def __repr__(self):
+        return "<Tag(citation_id='%s', tag='%s')>" % (
+            self.citation_id,
+            self.tag_id,
+        )
+
+#Base.metadata.drop_all(engine)
+#Base.metadata.create_all(engine)
 #db.session.commit()
