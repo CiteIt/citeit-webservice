@@ -9,10 +9,16 @@
 
 from lib.citeit_quote_context.document import Document
 from lib.citeit_quote_context.quote import Quote
+
+from lib.citeit_quote_context.misc.utils import publish_file
+from lib.citeit_quote_context.misc.utils import escape_json
+from citation import Citation 
+
 from bs4 import BeautifulSoup
 from functools import lru_cache
 from multiprocessing import Pool
 from collections import Counter
+from flask import jsonify
 import time
 import settings
 
@@ -164,6 +170,63 @@ class URL:
         """
 
         return result_list
+    
+    def publish_citations(self, format='list'):
+        if (format == 'list'):
+            saved_citations = []  # return full JSON list
+        else:
+            saved_citations = {}  # return summary dict: sha256: quote
+
+        for n, citation in enumerate(self.citations()):
+            print(n, ": saving citation.")
+            c = Citation(citation)  # lookup citation
+            #c.db_save()             # save citation to database
+
+            # Set JSON values
+            quote_json = {}
+            quote_json['citing_quote'] = escape_json(c.data['citing_quote'])
+            quote_json['sha256'] = c.data['sha256']
+            quote_json['citing_url'] = c.data['citing_url']
+            quote_json['cited_url'] = c.data['cited_url']
+            quote_json['citing_context_before'] = escape_json(c.data['citing_context_before'])
+            quote_json['cited_context_before'] = escape_json(c.data['cited_context_before'])
+            quote_json['citing_context_after'] = escape_json(c.data['citing_context_after'])
+            quote_json['cited_context_after'] = escape_json(c.data['cited_context_after'])
+            quote_json['cited_quote'] = escape_json(c.data['cited_quote'])
+            quote_json['hashkey'] = c.data['hashkey']
+
+            # Setting up Json settings locally ..
+            json_file = json.dumps(quote_json)
+            json_filename = ''.join([c.data['sha256'], '.json'])
+            json_full_filepath = os.path.join(settings.JSON_FILE_PATH, json_filename)
+
+            # Setting up Json settings with Cloud"
+            shard = json_filename[:2]
+            remote_path= ''.join(["quote/sha256/0.4/", str(shard), "/", json_filename])
+            print("JSON Path: " + json_file)
+            print("Remote path: " + remote_path)
+
+            # Publish JSON to Cloud, save copy locally
+            publish_file(
+                '',
+                json_file,
+                json_full_filepath,
+                remote_path,
+                "application/json"
+            )
+
+            if (format == 'list'):
+                saved_citations.append(quote_json)
+            else:
+                # Output simple summary:
+                saved_citations[c.data['sha256']] = c.data['citing_quote']
+                print(c.data['sha256'], ' ', c.data['hashkey'], ' ', c.data['citing_quote'])
+
+            print("File Uploaded")
+
+        return jsonify(saved_citations)
+
+
 # ################## Non-class functions #######################
 
 
@@ -180,4 +243,3 @@ def load_quote_data(quote_keys):
              )
 
     return quote.data()
-
