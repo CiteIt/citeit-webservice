@@ -19,6 +19,7 @@ from sqlalchemy_utils import EmailType, CountryType, ChoiceType, \
     IPAddressType, PasswordType, PhoneNumberType, TimezoneType, URLType, \
     PhoneNumber        
 
+from urllib.parse import urlparse
 from datetime import datetime
 
 import datetime
@@ -140,6 +141,11 @@ class Domain(Base):
         Index('domain_owner_user_index', 'owner_user'),
     )
 
+    def __init__(self, domain_url, owner_user=1 ):
+        # Standardize URL by chopping off path
+        self.domain_url = urlparse(domain_url).netloc() # abc.hostname.com
+        self.owner_user = User(owner_user)
+
     def __repr__(self):
         return "<Domain (id='%s', domain_url='%s')>" % (
             self.id,
@@ -151,6 +157,7 @@ class Document(Base):
 
     id = Column(BigInteger(), Sequence('document_id_seq'))  
     request_id = Column(BigInteger(), ForeignKey('request.id'), index=True, nullable=False)
+    request_ip_address = Column(IPAddressType)  # copy of request.ip_address
     domain_id = Column(BigInteger(), ForeignKey('domain.id'), nullable=False)
     document_url = Column(URLType, nullable=False)
     content_type = Column(String(50), nullable=False)
@@ -161,7 +168,8 @@ class Document(Base):
     encoding = Column(String(16), nullable=False)
     language = Column(String(16), nullable=False)
     word_count = Column(Integer, nullable=False)
-    content_hash = Column(String(64), nullable=False)
+    html_hash = Column(String(64), nullable=False)
+    text_hash = Column(String(64), nullable=False)
     create_date = Column(DateTime(), default=datetime.datetime.now, nullable=False)
     update_date = Column(DateTime(), default=datetime.datetime.now, nullable=False, onupdate=datetime.datetime.now)
     end_date = Column(
@@ -176,7 +184,7 @@ class Document(Base):
         Index('document_request_id_index', 'request_id'),
         Index('document_domain_id_index', 'domain_id'),
         Index('document_document_url_index', 'document_url', mysql_length=256),
-        UniqueConstraint('content_hash', name='document_content_hash_unique' ),
+        UniqueConstraint('html_hash', name='document_html_hash_unique' ),
     )
 
     def __repr__(self):
