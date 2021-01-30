@@ -10,22 +10,27 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
+
 from urllib import parse        # check if url is valid
-from citation import Citation   # provides a way to save quote and upload json
-from lib.citeit_quote_context.url import URL
-from lib.citeit_quote_context.canonical_url import Canonical_URL
-from lib.citeit_quote_context.document import Document
-from lib.citeit_quote_context.quote import Quote
-from lib.citeit_quote_context.misc.utils import publish_file
-from lib.citeit_quote_context.misc.utils import escape_json
 import urllib3
 import hashlib
-import settings
 import json
 import os
 
-import logging
+from bs4 import BeautifulSoup
 
+from .models import Request
+from .models import Document
+
+from citation import Citation   # provides a way to save quote and upload json
+from lib.citeit_quote_context.url import URL
+from lib.citeit_quote_context.canonical_url import Canonical_URL
+from lib.citeit_quote_context.quote import Quote
+from lib.citeit_quote_context.misc.utils import publish_file
+from lib.citeit_quote_context.misc.utils import escape_json
+
+import settings
+import logging
 
 WEBSERVICE_VERSION = "0.4"
 
@@ -62,6 +67,77 @@ if not app.debug:
 def about():
     return 'Hello, This is the CiteIt.net api! version: ' + WEBSERVICE_VERSION
 
+@app.route('/demo_post', methods=['POST'])
+def demo_post():
+
+    if request.method == "POST":
+        request_url = request.form.get('post_url', '')
+        post_body = request.form.get('post_body', '')
+        json_format = request.form.get('format', 'list')
+
+        if len(request_url) > 0:
+            #some_engine = create_engine('postgresql://scott:tiger@localhost/')
+
+            # create a configured "Session" class
+            #Session = sessionmaker(bind=some_engine)
+
+            # create a Session
+            session = Session()
+
+            r = Request(
+                ip_address = request.remote_addr,
+                request_type = 'post_demo',
+                request_url = request_url
+            )
+            #session.add(r)
+            #session.commit()
+
+            request_id = r.save()
+            domain_id = Domain(request_url)
+
+            # Generate text, wordcount, and hash
+            soup = BeautifulSoup(post_body)
+            body_text = soup.get_text()
+            word_count = len(body_text.split()) 
+
+            html_hash = hashlib.sha256(post_body.encode('utf-8')).hexdigest()
+            text_hash = hashlib.sha256(body_text.encode('utf-8')).hexdigest()
+
+            # Does this document already exist?
+            docs_count = session.query.filter(
+                #(Document.request_ip_address == ip_address),
+                ((Document.html_hash == html_hash) | (Document.text_hash == text_hash))
+            ).count()
+            
+            # If not Exists, Create doc, for later processing
+            if ((docs_count) == 0):
+                doc = Document(
+                    request_id = request.id,
+                    request_ip_address = ip_address,
+                    domain_id = domain_id,
+                    document_url = request_url,
+                    content_type = 'html',
+                    title = 'CiteIt Demo',
+                    body_html = post_body,
+                    body_text = body_text,
+                    encoding = 'en',
+                    language = 'en',
+                    word_count = word_count,
+                    html_hash = html_hash,
+                    text_hash = text_hash
+                )
+                #session.add(doc)
+                #session.commit()
+
+            # Get JSON Citations 
+            json = URL(request_url).publish_citations(json_format)
+            return json
+
+            #session.close()
+
+    return 'Hello, This is the CiteIt.net api! version: '  
+
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/v' + WEBSERVICE_VERSION + '/url/', methods=['GET', 'POST'])
 def post_url():
@@ -83,12 +159,10 @@ def post_url():
         url_string = request.args.get('url', '')
         format = request.args.get('format', '')
 
-
     if (format == 'list'):
         saved_citations = []  # return full JSON list
     else:
         saved_citations = {}  # return summary dict: sha256: quote
-
 
     # Check if URL is of a valid format
     parsed_url = parse.urlparse(url_string)
