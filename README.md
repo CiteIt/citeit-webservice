@@ -84,6 +84,67 @@ docker push citeit/citeit_webservice:v0.4.2
 
 docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
 
+### Docker with SSL using Lets Encrypt:
+
+docker ps 
+
+docker stop ID
+
+docker system prune
+
+STEP 1:
+docker run --detach \
+    --name nginx-proxy \
+    --publish 80:80 \
+    --publish 443:443 \
+    --volume certs:/etc/nginx/certs \
+    --volume vhost:/etc/nginx/vhost.d \
+    --volume html:/usr/share/nginx/html \
+	jwilder/nginx-proxy
+
+STEP 2:
+docker run --detach \
+    --name nginx-proxy-letsencrypt \
+    --volumes-from nginx-proxy \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --volume acme:/etc/acme.sh \
+    --env "DEFAULT_EMAIL=timlangeman@gmail.com" \
+    jrcs/letsencrypt-nginx-proxy-companion
+
+STEP 3:
+docker run --detach \
+  --name citeit_webservice \
+  --name citeit_webservice \
+  --env "VIRTUAL_HOST=api.citeit.net" \
+  --env "LETSENCRYPT_HOST=api.citeit.net" \
+	-e AMAZON_ACCESS_KEY=******************* \
+	-e AMAZON_SECRET_KEY=*********************+*** \
+citeit/citeit_webservice
+
+### Test SSL port locally:
+
+openssl s_client -connect localhost:443 -servername api.citeit.net
+
+140346583314880:error:0200206F:system library:connect:Connection refused:../crypto/bio/b_sock2.c:110:
+140346583314880:error:2008A067:BIO routines:BIO_connect:connect error:../crypto/bio/b_sock2.c:111:
+
+netstat -ntlp | grep LISTEN
+
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      3921/systemd-resolv 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      979/sshd            
+tcp6       0      0 :::22                   :::*                    LISTEN      979/sshd
+
+
+### Open SSL port
+
+sudo apt install ufw
+sudo ufw allow ssh
+sudo ufw enable
+sudo ufw status verbose
+
+netstat -ntlp | grep LISTEN
+
+
 ## Inspiration:
 I got this idea in 2015, while I was writing an article about hypertext pioneer
 [Ted Nelson](https://en.wikipedia.org/wiki/Ted_Nelson).
