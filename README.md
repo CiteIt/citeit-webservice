@@ -9,7 +9,10 @@ Demo site with video:
   * https://www.CiteIt.net/
   
 Sample API Calls:
-  * https://www.citeit.net/sample-code/  
+  * http://api.citeit.net/?url=https://www.openpolitics.com/2020/09/23/naked-quotations/ 
+
+Web Submission: description
+  * https://www.citeit.net/sample-code/    
 
 ## Tools Used ##
   * **API Server**: [Python](https://www.python.org/) [Flask](http://flask.pocoo.org/) Server
