@@ -79,10 +79,15 @@ python3 -m flask run --host=0.0.0.0 --port=80
 ### Docker:
 docker build -t citeit_webservice:latest .
 
-docker tag ce0bdceb4791 citeit/citeit_webservice:v0.4.2
-docker push citeit/citeit_webservice:v0.4.2
+docker tag 9c08913ff568a479 citeit/citeit_webservice:latest
+docker tag 9c08913ff568a479 citeit/citeit_webservice:v0.4.9
+docker push citeit/citeit_webservice:v0.4.9
+docker push citeit/citeit_webservice:latest
+
 
 docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
+docker stop efb18851a652
+
 
 ### Docker with SSL using Lets Encrypt:
 
@@ -92,10 +97,11 @@ docker stop ID
 
 docker system prune
 
+    --publish 80:80 \
+
 STEP 1:
 docker run --detach \
     --name nginx-proxy \
-    --publish 80:80 \
     --publish 443:443 \
     --volume certs:/etc/nginx/certs \
     --volume vhost:/etc/nginx/vhost.d \

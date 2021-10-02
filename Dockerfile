@@ -27,6 +27,7 @@ ENV VERSION_NUM '0.4'
 ENV JSON_FILE_PATH '/var/www/citeit-webservice/json/'
 ENV FLASK_APP app/app.py
 ENV FLASK_RUN_PORT 80
-EXPOSE 80
+ENV FLASK_RUN_PORT 443
+EXPOSE 80 443
 ENTRYPOINT ["python"]
 CMD ["app/app.py"]

@@ -944,15 +944,6 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         return transcript_content
 
     else:
-        # Download YouTube Transcript from API
-        ydl = youtube_dl.YoutubeDL(
-            {'writesubtitles': True,
-             'allsubtitles': True,
-             'writeautomaticsub': True
-            }
-        )
-        res = ydl.extract_info(url, download=False)
-
         # Remove lines that contain the following phrases
         remove_words = [
                         "-->"               #   Usage: 00:00:01.819 --> 00:00:01.829
@@ -961,18 +952,32 @@ def youtube_transcript(url, line_separator='', timesplits=''):
                         , "WEBVTT"
                         , "<c>"
                     ]
-
-        if res['requested_subtitles'] and res['requested_subtitles'][
-            'en']:
-            print('Grabbing vtt file from ' +
-                  res['requested_subtitles']['en']['url']
+        try: 
+            # Download YouTube Transcript from API
+            ydl = youtube_dl.YoutubeDL(
+                {'writesubtitles': True,
+                'allsubtitles': True,
+                'writeautomaticsub': True
+                }
             )
-            response = requests.get(
-                res['requested_subtitles']['en']['url'],
-                stream=True
-            )
+            res = ydl.extract_info(url, download=False)
 
+            if res['requested_subtitles'] and res['requested_subtitles'][
+                'en']:
+                print('Grabbing vtt file from ' +
+                    res['requested_subtitles']['en']['url']
+                )
+                response = requests.get(
+                    res['requested_subtitles']['en']['url'],
+                    stream=True
+                )
             text = response.text
+
+        except youtube_dl.utils.DownloadError:
+            text = ''
+
+
+
 
             # Remove Formatting: time & color ccodes
             # Credit: Alex Chan
