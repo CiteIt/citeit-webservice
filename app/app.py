@@ -19,8 +19,8 @@ import os
 
 from bs4 import BeautifulSoup
 
-from .models import Request
-from .models import Document
+#from .models import Request
+#from .models import Document
 
 from citation import Citation   # provides a way to save quote and upload json
 from lib.citeit_quote_context.url import URL
@@ -66,76 +66,6 @@ if not app.debug:
 @app.route('/about')
 def about():
     return 'Hello, This is the CiteIt.net api! version: ' + WEBSERVICE_VERSION
-
-@app.route('/demo_post', methods=['POST'])
-def demo_post():
-
-    if request.method == "POST":
-        request_url = request.form.get('post_url', '')
-        post_body = request.form.get('post_body', '')
-        json_format = request.form.get('format', 'list')
-
-        if len(request_url) > 0:
-            #some_engine = create_engine('postgresql://scott:tiger@localhost/')
-
-            # create a configured "Session" class
-            #Session = sessionmaker(bind=some_engine)
-
-            # create a Session
-            session = Session()
-
-            r = Request(
-                ip_address = request.remote_addr,
-                request_type = 'post_demo',
-                request_url = request_url
-            )
-            #session.add(r)
-            #session.commit()
-
-            request_id = r.save()
-            domain_id = Domain(request_url)
-
-            # Generate text, wordcount, and hash
-            soup = BeautifulSoup(post_body)
-            body_text = soup.get_text()
-            word_count = len(body_text.split()) 
-
-            html_hash = hashlib.sha256(post_body.encode('utf-8')).hexdigest()
-            text_hash = hashlib.sha256(body_text.encode('utf-8')).hexdigest()
-
-            # Does this document already exist?
-            docs_count = session.query.filter(
-                #(Document.request_ip_address == ip_address),
-                ((Document.html_hash == html_hash) | (Document.text_hash == text_hash))
-            ).count()
-            
-            # If not Exists, Create doc, for later processing
-            if ((docs_count) == 0):
-                doc = Document(
-                    request_id = request.id,
-                    request_ip_address = ip_address,
-                    domain_id = domain_id,
-                    document_url = request_url,
-                    content_type = 'html',
-                    title = 'CiteIt Demo',
-                    body_html = post_body,
-                    body_text = body_text,
-                    encoding = 'en',
-                    language = 'en',
-                    word_count = word_count,
-                    html_hash = html_hash,
-                    text_hash = text_hash
-                )
-                #session.add(doc)
-                #session.commit()
-
-            # Get JSON Citations 
-            json = URL(request_url).publish_citations(json_format)
-            return json
-
-            #session.close()
-
-    return 'Hello, This is the CiteIt.net api! version: '  
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -285,7 +215,7 @@ def document_text_version():
     else:
         timesplits = False
 
-    d = Document(url, line_separator, timesplits)
+    #d = Document(url, line_separator, timesplits)
 
     response = app.make_response(d.text())
     response.mimetype = "text"
@@ -296,10 +226,10 @@ def document_text_version():
 def document_meta_data():
     url = request.args.get('url', '')
     verbose_view = request.args.get('verbose', True)
-    d = Document(url)
-    document_data = d.data(verbose_view=verbose_view)
-    return  jsonify(document_data)
-
+    # d = Document(url)
+    # document_data = d.data(verbose_view=verbose_view)
+    # return  jsonify(document_data)
+    # return ''
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)

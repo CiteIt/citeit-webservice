@@ -152,6 +152,11 @@ class URL:
         pool = Pool(processes=settings.NUM_DOWNLOAD_PROCESSES)
         try:
             result_list = pool.map(load_quote_data, citations_list_dict)
+
+            # Debug: run synchronously
+            #for citation_dict in citations_list_dict:
+            #    load_quote_data(citation_dict)
+
         except (NameError, ValueError):
             pass
             # TODO: Add better error handling
