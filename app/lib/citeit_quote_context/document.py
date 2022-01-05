@@ -943,14 +943,20 @@ def youtube_transcript(url, line_separator='', timesplits=''):
         return transcript_content
 
     else:
-        # Download YouTube Transcript from API
-        ydl = youtube_dl.YoutubeDL(
-            {'writesubtitles': True,
-             'allsubtitles': True,
-             'writeautomaticsub': True
-            }
-        )
-        res = ydl.extract_info(url, download=False)
+    
+        try:
+            # Download YouTube Transcript from API
+            ydl = youtube_dl.YoutubeDL(
+                {'writesubtitles': True,
+                 'allsubtitles': True,
+                 'writeautomaticsub': True
+                }
+            )
+
+            res = ydl.extract_info(url, download=False)
+
+        except youtube_dl.utils.DownloadError:
+            return "ERROR: YouTube said: Unable to extract video data"
 
         # Remove lines that contain the following phrases
         remove_words = [
