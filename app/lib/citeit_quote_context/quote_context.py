@@ -86,8 +86,8 @@ class QuoteContext:
             estimated_starting_location = self.estimated_starting_location()
 
         quote_start_position = quote_locate.match_bitap(
-            self.text,
-            self.quote,
+            self.text.lower(),
+            self.quote.lower(),
             estimated_starting_location
         )
         if (quote_start_position >= 0):
