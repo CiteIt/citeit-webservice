@@ -7,7 +7,7 @@
 # The code for this server library is released under the MIT License:
 # http://www.opensource.org/licenses/mit-license
 
-from models import Domain, Document  
+#from models import Domain, Document  
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.canonical_url import url_without_protocol
@@ -309,12 +309,14 @@ class Document:
         words = data.split()
         word_count = len(words)
 
+        """
         # Get Hash of Text Content: used to prevent duplicates
         hash_method = getattr(hashlib, settings.HASH_ALGORITHM)
         try:
             content_hash = hash_method(text.encode(self.encoding)).hexdigest()
         except UnicodeEncodeError:
             content_hash = ''   # TODO: research character encoding error
+
 
         # Insert Database Record if it doesn't exist
         document_exists = db.session.query(Document.id).filter_by(content_hash=content_hash, url=self.url).scalar() is not None
@@ -339,6 +341,7 @@ class Document:
                 , word_count = word_count
                 , content_hash = content_hash
             ) 
+        """
 
     @lru_cache(maxsize=500)
     def text(self):
@@ -1093,7 +1096,7 @@ def youtube_transcript(url, line_separator='', timesplits=''):
                     line = line.replace("&gt;", "")
                     line = line.replace("   ", " ")
                     line = line.replace("  ", " ")
-                    line = line.strip() + " " + line_separator
+                    line = line.strip() + " " + str(line_separator)
 
                     transcript_output.append(line)
 
