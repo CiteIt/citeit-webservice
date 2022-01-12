@@ -13,6 +13,7 @@ from lib.citeit_quote_context.misc.utils import publish_file
 import youtube_dl
 import settings
 
+import tldextract
 import requests
 import itertools
 import operator
@@ -58,7 +59,7 @@ class YouTubeTranscript:
         return self.youtube_deduplicated()
 
 
-    def publish_transcript(self):
+    def publish(self):
 
         if settings.SAVE_DOWNLOADS_TO_FILE:
             print('create/write file: ' + self.transcript_filename())
@@ -242,6 +243,7 @@ class YouTubeTranscript:
         
         return ''.join(transcript_output)
 
+
     def youtube_deduplicated(self):
 
         transcript_content = ''
@@ -304,3 +306,143 @@ class YouTubeTranscript:
         transcript_output = transcript_output.strip()
 
         return transcript_output
+
+
+
+
+class OyezTranscript:
+    """
+        Check to see if transcript was already downloaded and cached
+        If not, query the YouTube API and parse the response into a transcript
+            - get RAW transcript with time codes
+            - remove formatting and time codes
+    """
+
+    def __init__(
+        self,
+        transcript_id = '',
+        line_separator = '', 
+        timesplits=''
+    ):
+        self.transcript_id = str(transcript_id)
+        self.line_separator = line_separator
+        self.timesplits = timesplits
+
+    def transcript(self, cache=True):
+
+        # is a cached version available?
+        if cache and (len(self.transcript_cache()) > 0):
+            return self.transcript_cache()
+
+    def json_url(self):
+
+        if (len(str(self.transcript_id)) > 0):
+            json_url = 'https://api.oyez.org/case_media/oral_argument_audio/' + self.transcript_id
+        else:
+            print("NOT: oyez.org")
+            json_url = ""
+
+        return json_url
+
+
+    def transcript_filename(self):
+        return '../downloads/transcripts/custom/oyez.org/' + self.transcript_id + '.txt'
+
+
+    def transcript_cache(self):
+        """
+            Get cached version fo transcript
+        """
+        transcript_content = ''
+
+        file_dict = get_from_cache(self.transcript_filename())
+        transcript_content = file_dict['text']
+
+        return transcript_content
+
+
+    def transcript(self, line_separator='\n\n', cache=True):
+        """
+            Extract transcript from JSON data
+            Example: https://api.oyez.org/case_media/oral_argument_audio/22476
+        """
+
+        transcript_content = self.transcript_cache()
+
+        # is a cached version available?
+        if cache and (len(self.transcript_cache()) > 0):
+            return transcript_content
+
+        # Convert public json url to text transcript
+        if (len(self.json_url()) == 0):
+            print("NOT: " + self.json_url())
+            return ''
+        else:
+            print("OYEZ JSON: " + self.json_url())
+
+            output = ''
+            line_output = ''
+
+            print(self.json_url())
+
+            r = requests.get(url=self.json_url())
+            data = r.json()  # Check the JSON Response Content documentation below
+
+            for num, sections in enumerate(data['transcript']['sections']):
+
+                for turns in sections['turns']:
+                    turn_num = 0
+
+                    for section_dict in turns:
+                        section_num = 0
+
+                        for text in turns['text_blocks']:
+                            if (text['text'] != line_output):
+
+                                if (turn_num == 0):
+                                    output = output + text['text'] + line_separator
+                                line_output = text['text']
+
+                            section_num = section_num + 1
+
+                        turn_num = turn_num + 1
+
+            return output
+
+
+    def publish(self):
+        
+        if settings.SAVE_DOWNLOADS_TO_FILE:
+            print('create/write file: ' + self.transcript_filename())
+          
+            local_filename = '../transcripts/oyez.org/' + self.transcript_id + '.txt'
+            remote_path = ''.join(['transcript/custom/oyez.org/', self.transcript_id , '.txt'])
+
+            publish_file(
+                self.url,
+                self.transcript(),
+                local_filename,
+                remote_path,
+                'text/plain'
+            )
+
+################# OYEZ HELPER FUNCTIONS ##################
+
+
+def get_domain(public_url):
+    from urllib.parse import urlparse
+    parsed_uri = urlparse(public_url)
+    domain = '{uri.netloc}'.format(uri=parsed_uri)
+    return domain
+
+def oyez_case_id(public_apps_url):
+
+    # Make sure the domain is Oyez:
+    ext = tldextract.extract(public_apps_url)
+
+    if (ext.domain == 'oyez' and ext.suffix == 'org'):
+        case_id = re.match('.*?([0-9]+)$', public_apps_url).group(1)
+        return case_id
+    else:
+        print("NOT: oyez.org")
+        return ""
