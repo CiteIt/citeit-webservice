@@ -31,21 +31,6 @@ __license__ = 'MIT'
 __version__ = '0.4'
 
 
-"""
-USAGE:
-
-from lib.citeit_quote_context.transcript import OyezTranscript
-url = 'https://api.oyez.org/case_media/oral_argument_audio/22476'
-
-
-t = YouTubeTranscript(url)
-t.transcript(' ')
-
-t = OyezTranscript(url)
-t.transcript(' ')
-"""
-
-
 
 class YouTubeTranscript:
     """
@@ -53,6 +38,12 @@ class YouTubeTranscript:
         If not, query the YouTube API and parse the response into a transcript
             - get RAW transcript with time codes
             - remove formatting and time codes
+
+        USAGE:
+            from lib.citeit_quote_context.transcript import YouTubeTranscript
+            url = 'https://youtu.be/GOnpVQnv5Cw'
+            t = YouTubeTranscript(url)
+            t.transcript('')
     """
 
     def __init__(
@@ -71,8 +62,7 @@ class YouTubeTranscript:
         if cache and (len(self.transcript_cache()) > 0):
             return self.transcript_cache()
 
-        # lookup and deduplicate results    
-        return self.youtube_deduplicated(line_separator)
+        return self.youtube_text(line_separator)
 
 
     def publish(self):
@@ -98,12 +88,11 @@ class YouTubeTranscript:
         """
             Get cached version fo transcript
         """
-        transcript_content = ''
 
         file_dict = get_from_cache(self.transcript_filename())
         transcript_content = file_dict['text']
 
-        return transcript_content
+        return transcript_content or ''
 
 
     def youtube_video_id(self):
@@ -146,7 +135,6 @@ class YouTubeTranscript:
                 'writeautomaticsub': True
                 }
             )
-
             res = ydl.extract_info(self.url, download=False)
 
         except youtube_dl.utils.DownloadError:
@@ -157,7 +145,6 @@ class YouTubeTranscript:
     def youtube_text(self, line_separator = ''):
 
         transcript_output = []
-
         res = self.youtube_raw()
 
         # Remove lines that contain the following phrases
@@ -260,78 +247,16 @@ class YouTubeTranscript:
         return ''.join(transcript_output)
 
 
-    def youtube_deduplicated(self, line_separator=''):
-
-        transcript_content = ''
-        transcript_output = []
-        deduplicated_output = ''
-        duplicate_cnt = 0
-        content_file = ''
-
-        transcript_output = self.youtube_text(line_separator)
-
-        # Check to see if lines are duplicated
-        line_counter = {}
-        counter_cnt = {}
-        deduplicated_output = []
-
-        # Count each line
-        for line in transcript_output:
-
-            if (line not in line_counter):
-                line_counter[line] = 1
-            else:
-                current_cnt = line_counter[line]
-                line_counter[line] = current_cnt + 1
-
-        # How many lines have each count?
-        for line, cnt in line_counter.items():
-
-            if cnt not in counter_cnt:
-                counter_cnt[cnt] = 1
-            else:
-                counter_cnt[cnt] = counter_cnt[cnt] + 1
-
-        # Are lines being duplicated or triplicated at higher frequency that single lines?
-        if (any(counter_cnt.values())):  # not empty
-            max_count = max(counter_cnt.items(), key=operator.itemgetter(1))[0]
-        else:
-            max_count = 0
-
-        # Regular Line Count
-        if (max_count == 1):
-            transcript_output =  ''.join(transcript_output)
-
-        # Duplicate Lines Found
-        else:
-            print('De-duplicate transcripts:', max_count)
-            for line_num, line in enumerate(transcript_output):
-                if (line_num%max_count) == 1:  # Get every n lines
-                    deduplicated_output.append(line)
-
-            transcript_output = ''.join(deduplicated_output)
-
-        # Combine lines
-        transcript_output = ''.join(transcript_output)
-
-        # Replace Special characters
-        transcript_output = transcript_output.replace('   ', ' ')
-        transcript_output = transcript_output.replace('  ', ' ')
-        transcript_output = transcript_output.replace('WEBVTT Kind', ' ')
-        transcript_output = transcript_output.replace('WEBVTTKind', ' ')
-        transcript_output = transcript_output.strip()
-
-        return transcript_output
-
-
-
-
 class OyezTranscript:
     """
         Check to see if transcript was already downloaded and cached
-        If not, query the YouTube API and parse the response into a transcript
-            - get RAW transcript with time codes
-            - remove formatting and time codes
+        If not, query the Oyez API and parse the response into a transcript
+
+        USAGE:
+            from lib.citeit_quote_context.transcript import OyezTranscript
+            url = 'https://api.oyez.org/case_media/oral_argument_audio/22476'
+            t = OyezTranscript(url)
+            t.transcript(' ')
     """
 
     def __init__(
@@ -387,7 +312,7 @@ class OyezTranscript:
             r = requests.get(url=self.json_url())
             data = r.json()  # Check the JSON Response Content documentation below
 
-            for num, sections in enumerate(data['transcript']['sections']):
+            for sections in data['transcript']['sections']:
 
                 for turns in sections['turns']:
                     turn_num = 0
@@ -432,4 +357,3 @@ def get_domain(public_url):
     parsed_uri = urlparse(public_url)
     domain = '{uri.netloc}'.format(uri=parsed_uri)
     return domain
-    
