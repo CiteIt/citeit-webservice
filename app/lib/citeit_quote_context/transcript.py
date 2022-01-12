@@ -31,6 +31,22 @@ __license__ = 'MIT'
 __version__ = '0.4'
 
 
+"""
+USAGE:
+
+from lib.citeit_quote_context.transcript import OyezTranscript
+url = 'https://api.oyez.org/case_media/oral_argument_audio/22476'
+
+
+t = YouTubeTranscript(url)
+t.transcript(' ')
+
+t = OyezTranscript(url)
+t.transcript(' ')
+"""
+
+
+
 class YouTubeTranscript:
     """
         Check to see if transcript was already downloaded and cached
@@ -49,14 +65,14 @@ class YouTubeTranscript:
         self.line_separator = line_separator
         self.timesplits = timesplits
 
-    def transcript(self, cache=True):
+    def transcript(self, line_separator='\n\n', cache=True):
 
         # is a cached version available?
         if cache and (len(self.transcript_cache()) > 0):
             return self.transcript_cache()
 
         # lookup and deduplicate results    
-        return self.youtube_deduplicated()
+        return self.youtube_deduplicated(line_separator)
 
 
     def publish(self):
@@ -138,7 +154,7 @@ class YouTubeTranscript:
         
         return res
 
-    def youtube_text(self):
+    def youtube_text(self, line_separator = ''):
 
         transcript_output = []
 
@@ -227,9 +243,9 @@ class YouTubeTranscript:
                     line = line.replace('   ', ' ')
                     line = line.replace('  ', ' ')
                     try:
-                        line = line.strip() + ' ' + self.line_separator
+                        line = line.strip() + ' ' + line_separator
                     except:
-                        line = line.strip() + ' ' + str(self.line_separator)
+                        line = line.strip() + ' ' + str(line_separator)
 
                     transcript_output.append(line)
 
@@ -244,7 +260,7 @@ class YouTubeTranscript:
         return ''.join(transcript_output)
 
 
-    def youtube_deduplicated(self):
+    def youtube_deduplicated(self, line_separator=''):
 
         transcript_content = ''
         transcript_output = []
@@ -252,7 +268,7 @@ class YouTubeTranscript:
         duplicate_cnt = 0
         content_file = ''
 
-        transcript_output = self.youtube_text()
+        transcript_output = self.youtube_text(line_separator)
 
         # Check to see if lines are duplicated
         line_counter = {}
@@ -320,46 +336,29 @@ class OyezTranscript:
 
     def __init__(
         self,
-        transcript_id = '',
+        url,
         line_separator = '', 
-        timesplits=''
+        timesplits = ''
     ):
-        self.transcript_id = str(transcript_id)
+        self.url = str(url)  # also allow transcript_id to be entered as an Int
         self.line_separator = line_separator
         self.timesplits = timesplits
-
-    def transcript(self, cache=True):
-
-        # is a cached version available?
-        if cache and (len(self.transcript_cache()) > 0):
-            return self.transcript_cache()
+    
+    def transcript_id(self):
+        return re.match('.*?([0-9]+)$', self.url).group(1)
 
     def json_url(self):
-
-        if (len(str(self.transcript_id)) > 0):
-            json_url = 'https://api.oyez.org/case_media/oral_argument_audio/' + self.transcript_id
-        else:
-            print("NOT: oyez.org")
-            json_url = ""
-
-        return json_url
-
+        return 'https://api.oyez.org/case_media/oral_argument_audio/' + self.transcript_id()
 
     def transcript_filename(self):
-        return '../downloads/transcripts/custom/oyez.org/' + self.transcript_id + '.txt'
-
+        return '../downloads/transcripts/custom/oyez.org/' + self.transcript_id() + '.txt'
 
     def transcript_cache(self):
-        """
-            Get cached version fo transcript
-        """
-        transcript_content = ''
+        # Get cached version of transcript
 
         file_dict = get_from_cache(self.transcript_filename())
         transcript_content = file_dict['text']
-
-        return transcript_content
-
+        return transcript_content or ''
 
     def transcript(self, line_separator='\n\n', cache=True):
         """
@@ -409,14 +408,13 @@ class OyezTranscript:
 
             return output
 
-
     def publish(self):
         
         if settings.SAVE_DOWNLOADS_TO_FILE:
             print('create/write file: ' + self.transcript_filename())
           
-            local_filename = '../transcripts/oyez.org/' + self.transcript_id + '.txt'
-            remote_path = ''.join(['transcript/custom/oyez.org/', self.transcript_id , '.txt'])
+            local_filename = '../transcripts/oyez.org/' + self.transcript_id() + '.txt'
+            remote_path = ''.join(['transcript/custom/oyez.org/', self.transcript_id() , '.txt'])
 
             publish_file(
                 self.url,
@@ -434,15 +432,4 @@ def get_domain(public_url):
     parsed_uri = urlparse(public_url)
     domain = '{uri.netloc}'.format(uri=parsed_uri)
     return domain
-
-def oyez_case_id(public_apps_url):
-
-    # Make sure the domain is Oyez:
-    ext = tldextract.extract(public_apps_url)
-
-    if (ext.domain == 'oyez' and ext.suffix == 'org'):
-        case_id = re.match('.*?([0-9]+)$', public_apps_url).group(1)
-        return case_id
-    else:
-        print("NOT: oyez.org")
-        return ""
+    
