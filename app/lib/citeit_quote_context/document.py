@@ -11,6 +11,7 @@
 from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.transcript import YouTubeTranscript
+from lib.citeit_quote_context.transcript import OyezTranscript
 from lib.citeit_quote_context.canonical_url import url_without_protocol
 from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import fix_encoding
