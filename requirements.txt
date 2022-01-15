@@ -88,6 +88,7 @@ tldextract==3.1.2
 tomlkit>=0.7.2
 tqdm==4.62.3
 typing_extensions>=3.8
+tweetpy >= 4.4.0
 tzdata==2021.5
 tzlocal==3.0
 urllib3==1.26.7

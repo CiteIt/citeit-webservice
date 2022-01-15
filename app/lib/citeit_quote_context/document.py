@@ -12,6 +12,8 @@ from lib.citeit_quote_context.canonical_url import Canonical_URL
 from lib.citeit_quote_context.content_type import Content_Type
 from lib.citeit_quote_context.transcript import YouTubeTranscript
 from lib.citeit_quote_context.transcript import OyezTranscript
+from lib.citeit_quote_context.transcript import TwitterTranscript
+
 from lib.citeit_quote_context.canonical_url import url_without_protocol
 from lib.citeit_quote_context.misc.utils import publish_file
 from lib.citeit_quote_context.misc.utils import fix_encoding
@@ -637,6 +639,10 @@ class Document:
         elif (ext.domain == 'oyez' and ext.suffix == 'org'):
             return 'oyez.org'
 
+        # Twitter: TODO
+        elif (ext.domain == 'twitter' and ext.suffix == 'com'):
+            return 'twitter.com'
+
         else:
             return ''
 
@@ -656,6 +662,8 @@ class Document:
         elif (media_provider == 'oyez.org'):
             supplemental_text = OyezTranscript(self.url).transcript()
 
+        elif (media_provider == 'twitter.com'):
+            supplemental_text = TwitterTranscript(self.url).transcript()
             # supplemental_text = oyez_transcript(self.url)
 
         return supplemental_text

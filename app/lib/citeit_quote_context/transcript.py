@@ -10,6 +10,7 @@
 from lib.citeit_quote_context.misc.utils import get_from_cache
 from lib.citeit_quote_context.misc.utils import publish_file
 
+import tweepy
 import youtube_dl
 import settings
 
@@ -280,7 +281,6 @@ class OyezTranscript:
 
     def transcript_cache(self):
         # Get cached version of transcript
-
         file_dict = get_from_cache(self.transcript_filename())
         transcript_content = file_dict['text']
         return transcript_content or ''
@@ -349,11 +349,41 @@ class OyezTranscript:
                 'text/plain'
             )
 
-################# OYEZ HELPER FUNCTIONS ##################
 
+class TwitterTranscript:
+    """
+        Check to see if transcript was already downloaded and cached
+        If not, query the Oyez API and parse the response into a transcript
 
-def get_domain(public_url):
-    from urllib.parse import urlparse
-    parsed_uri = urlparse(public_url)
-    domain = '{uri.netloc}'.format(uri=parsed_uri)
-    return domain
+        USAGE:
+            from lib.citeit_quote_context.transcript import OyezTranscript
+            url = 'https://twitter.com/NewsHour/status/1375707662197919746'
+            t = TwitterTranscript(url)
+            t.transcript(' ')
+    """
+
+    def __init__(
+        self,
+        url,
+        line_separator = '' 
+    ):
+        self.url = url
+        self.line_separator = line_separator
+
+        auth = tweepy.OAuthHandler(settings.twitter_consumer_key, settings.twitter_consumer_secret)
+        auth.set_access_token(settings.twitter_access_token, settings.twitter_access_token_secret)
+
+        self.api = tweepy.API(auth)
+
+    def id(self):
+        id_matches = re.findall(r'\d+', self.url)
+
+        if len(id_matches) > 0:
+            return id_matches[0]  # first matching digits
+        else:
+            return -1   # not found
+        
+    def transcript(self, line_separator='\n\n', cache=True):
+
+        t = self.api.get_status(self.id(), tweet_mode="extended")
+        return t.full_text
