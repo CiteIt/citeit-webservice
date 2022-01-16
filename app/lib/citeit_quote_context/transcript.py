@@ -370,8 +370,8 @@ class TwitterTranscript:
         self.url = url
         self.line_separator = line_separator
 
-        auth = tweepy.OAuthHandler(settings.twitter_consumer_key, settings.twitter_consumer_secret)
-        auth.set_access_token(settings.twitter_access_token, settings.twitter_access_token_secret)
+        auth = tweepy.OAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
+        auth.set_access_token(settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_ACCESS_TOKEN_SECRET)
 
         self.api = tweepy.API(auth)
 

@@ -16,6 +16,15 @@ DATABASE_USER = os.getenv('DATABASE_USER', database_settings.DATABASE_USER)
 DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', database_settings.DATABASE_PASSWORD)
 DATABASE_PORT = = os.getenv('DATABASE_PORT', database_settings.DATABASE_PORT)
 
+
+TWITTER_CONSUMER_KEY = os.getenv('DATABASE_NAME', database_settings.TWITTER_CONSUMER_KEY)
+TWITTER_CONSUMER_SECRET = os.getenv('DATABASE_USER', database_settings.TWITTER_CONSUMER_SECRET)
+TWITTER_ACCESS_TOKEN = os.getenv('DATABASE_PASSWORD', database_settings.TWITTER_ACCESS_TOKEN)
+TWITTER_ACCESS_TOKEN_SECRET = = os.getenv('DATABASE_PORT', database_settings.TWITTER_ACCESS_TOKEN_SECRET)
+
+
+
+
 JSON_FILE_PATH = '/tmp/'   # in Lambda, you need to save to /tmp folder
 
 # Construct Database Connection String from Docker

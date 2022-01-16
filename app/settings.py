@@ -10,6 +10,9 @@ logging.basicConfig(filename="citeit-webservice.log",
 logger=logging.getLogger() 
 logger.setLevel(logging.DEBUG) 
 
+# NOTE: aws_setting is stored in grandparent path
+# sys.path.append(os.path.abspath('../../'))
+
 
 # Webservice is versioned in JSON URL
 VERSION_NUM = os.getenv('VERSION_NUM', '0.4')
@@ -41,7 +44,11 @@ TEXT_ESCAPE_CODE_POINTS = set ( [
 
 HASH_ALGORITHM = 'sha256'
 
-
+# TWITTER CREDENTIALS
+TWITTER_CONSUMER_KEY = 'store key in file located above ap root'
+TWITTER_CONSUMER_SECRET = 'store key in file located above ap root'
+TWITTER_ACCESS_TOKEN = 'store key in file located above ap root'
+TWITTER_ACCESS_TOKEN_SECRET = 'store key in file located above ap root'
 
 ESCAPE_SPECIAL_CHARS = [
   # Example of characters that could be escaped: (currently commented out)
@@ -83,6 +90,27 @@ except ImportError:
     AMAZON_S3_BUCKET = os.getenv('AMAZON_S3_BUCKET', '')      # 'read.citeit.net'
     AMAZON_S3_ENDPOINT = os.getenv('AMAZON_S3_ENDPOINT', '')  # 's3.amazonaws.com'
     AMAZON_REGION_NAME = os.getenv('AMAZON_REGION_NAME', '')  # 'us-east-1'
+
+
+########################## Twitter ##############################
+
+try:
+    # Are Twitter Settings supplied by an included AWS file?
+    # I put Twitter config in the AWS file rather than make a separate file for Twitter
+    import aws_settings  # path: (../../aws_settings.py)
+
+    TWITTER_CONSUMER_KEY = aws_settings.TWITTER_CONSUMER_KEY
+    TWITTER_CONSUMER_SECRET = aws_settings.TWITTER_CONSUMER_SECRET
+    TWITTER_ACCESS_TOKEN = aws_settings.TWITTER_ACCESS_TOKEN
+    TWITTER_ACCESS_TOKEN_SECRET = aws_settings.TWITTER_ACCESS_TOKEN_SECRET
+
+except ImportError:
+    # Use Docker Settings
+    TWITTER_CONSUMER_KEY = os.getenv('TWITTER_CONSUMER_KEY', '')    # 'aBklka;ekjfas;dfja;sdjf'
+    TWITTER_CONSUMER_SECRET = os.getenv('TWITTER_CONSUMER_SECRET', '')    # 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
+    TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN', '')      # '283747798343-ioasfjklasdklfjlajkf'
+    TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET', '')  # 'aldskfj;kjaldfjadjfkds;'
+
 
 ###############################################################################################################################
 # Default to AWS File Input, if it exists. Get Amazon Settings from Docker Input,
