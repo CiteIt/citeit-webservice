@@ -56,7 +56,7 @@ pip-review==1.1.1
 pipreqs==0.4.11
 pipupgrade==1.11.0
 poyo==0.5.0
-protobuf==3.19.1
+protobuf==3.19.5
 psycopg2-binary==2.9.3
 pycparser==2.21
 pyee==8.2.2
