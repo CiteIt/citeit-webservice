@@ -1,9 +1,6 @@
 appdirs==1.4.4
 arrow==1.2.1
 attrs==21.4.0
-
-
-
 backports.zoneinfo==0.2.1
 beautifulsoup4==4.10.0
 binaryornot==0.4.4
@@ -100,7 +97,7 @@ websockets>=9.ck1
 Werkzeug==2.0.2
 whichcraft==0.6.1
 yarg==0.1.9
-youtube-dl==2021.12.17
+yt-dlp==2023.02.17
 zipp==3.6.0
 
 

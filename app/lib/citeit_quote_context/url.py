@@ -86,7 +86,6 @@ class URL:
 
         # Get all blockquote and q tags
         for cite in soup.find_all(['blockquote', 'q']):
-            # print("Beautiful Soup: ", cite.get('cite'), cite.text)
             if cite.get('cite'):
                 quote = {}
                 quote['citing_quote'] = cite.text

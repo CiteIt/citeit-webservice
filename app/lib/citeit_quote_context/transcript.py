@@ -9,9 +9,9 @@
 
 from lib.citeit_quote_context.misc.utils import get_from_cache
 from lib.citeit_quote_context.misc.utils import publish_file
+from youtube_transcript_api import YouTubeTranscriptApi
 
 import tweepy
-import youtube_dl
 import settings
 
 import tldextract
@@ -21,7 +21,7 @@ import operator
 import re
 import os
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
 
 
@@ -65,7 +65,6 @@ class YouTubeTranscript:
 
         return self.youtube_text(line_separator)
 
-
     def publish(self):
 
         if settings.SAVE_DOWNLOADS_TO_FILE:
@@ -89,12 +88,9 @@ class YouTubeTranscript:
         """
             Get cached version fo transcript
         """
-
         file_dict = get_from_cache(self.transcript_filename())
         transcript_content = file_dict['text']
-
         return transcript_content or ''
-
 
     def youtube_video_id(self):
         # Get id from YouTube URL
@@ -120,133 +116,35 @@ class YouTubeTranscript:
             if query.path[:3] == '/v/':
                 return query.path.split('/')[2]
         # fail?
-        return None
+        return ''
 
+    def youtube_transcript_list(self):
+
+        transcript_list = YouTubeTranscriptApi.list_transcripts(self.youtube_video_id())
+        return transcript_list
 
     def youtube_raw(self):
         """
-            Download YouTube Transcript from API
-            RAW Transcript which includes time signatures and WEBVTT
+            Get all matching transcipts
         """
-            
-        try:
-            ydl = youtube_dl.YoutubeDL(
-                {'writesubtitles': True,
-                'allsubtitles': True,
-                'writeautomaticsub': True
-                }
-            )
-            res = ydl.extract_info(self.url, download=False)
 
-        except youtube_dl.utils.DownloadError:
-            return 'ERROR: YouTube said: Unable to extract video data'
+        yt_list = self.youtube_transcript_list()
+        transcripts = yt_list.find_transcript(['en-US','en'])
+        return transcripts
         
-        return res
-
     def youtube_text(self, line_separator = ''):
+        """
+            Combine lines of transcript 
+        """
 
-        transcript_output = []
-        res = self.youtube_raw()
+        text = ''
+        transcript = self.youtube_raw()
+        t = transcript.fetch()
 
-        # Remove lines that contain the following phrases
-        remove_words = [
-                        '-->'               #   Usage: 00:00:01.819 --> 00:00:01.829
-                        , 'Language: en'
-                        , ': captions'
-                        , 'WEBVTT'
-                        , '<c>'
-                    ]
+        for line in t:
+            text += line['text'] + ' '
 
-        if res['requested_subtitles'] and res['requested_subtitles']['en']:
-
-            print('Grabbing vtt file from ' +
-                res['requested_subtitles']['en']['url']
-            )
-            response = requests.get(
-                res['requested_subtitles']['en']['url'],
-                stream=True
-            )
-
-            text = response.text
-
-            # Remove Formatting: time & color ccodes
-            # Credit: Alex Chan
-            # Source: https://github.com/alexwlchan/junkdrawer/blob/d8ee4dee1b89181d114500b6e2d69a48e2a0e9c1/services/youtube/vtt2txt.py
-
-            # Throw away the header, which is of the form:
-            #
-            #     WEBVTT
-            #     Kind: captions
-            #     Language: en
-            #     Style:
-            #     ::cue(c.colorCCCCCC) { color: rgb(204,204,204);
-            #      }
-            #     ::cue(c.colorE5E5E5) { color: rgb(229,229,229);
-            #      }
-            #     ##
-            #
-
-            #>>>>>>>>>>>text = text.split("##\n", 1)[1]
-
-            # Now throw away all the timestamps, which are typically of
-            # the form:
-            #
-            #     00:00:01.819 --> 00:00:01.829 align:start position:0%
-            #
-            text, _ = re.subn(
-                r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3} align:start position:0%\n',
-                '',
-                text
-            )
-
-            # And the color changes, e.g.
-            #
-            #     <c.colorE5E5E5>
-            #
-
-            ###### text, _ = re.subn(r'<c\.color[0-9A-Z]{6}>', '', text)
-
-            # And any other timestamps, typically something like:
-            #
-            #    </c><00:00:00,539><c>
-            #
-            # with optional closing/opening tags.
-            #######text, _ = re.subn(r'(?:</c>)?(?:<\d{2}:\d{2}:\d{2}\.\d{3}>)?(?:<c>)?',
-            #######                  '', text)
-
-            # 00:00:03,500 --> 00:00:03,510
-            text, _ = re.subn(
-                r'\d{2}:\d{2}:\d{2}\.\d{3} \-\-> \d{2}:\d{2}:\d{2}\.\d{3}\n', '',
-                text)
-
-            # Now get the distinct lines.
-            text = [line.strip() + ' ' for line in text.splitlines() if line.strip()]
-
-            # Credit: Hernan Pesantez: https://superuser.com/users/1162906/hernan-pesantez
-            # https://superuser.com/questions/927523/how-to-download-only-subtitles-of-videos-using-youtube-dl
-
-            for line, _ in itertools.groupby(text):
-                if not any(remove_word in line for remove_word in remove_words):
-                    line = line.replace('&gt;', '')
-                    line = line.replace('   ', ' ')
-                    line = line.replace('  ', ' ')
-                    try:
-                        line = line.strip() + ' ' + line_separator
-                    except:
-                        line = line.strip() + ' ' + str(line_separator)
-
-                    transcript_output.append(line)
-
-            if len(res['subtitles']) > 0:
-                print('manual captions')
-            else:
-                print('automatic_captions')
-
-        else:
-            print('Youtube Video does not have any english captions')
-        
-        return ''.join(transcript_output)
-
+        return text.replace('\n', ' ')	
 
 class OyezTranscript:
     """
@@ -387,3 +285,4 @@ class TwitterTranscript:
 
         t = self.api.get_status(self.id(), tweet_mode="extended")
         return t.full_text
+

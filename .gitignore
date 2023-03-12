@@ -18,6 +18,9 @@ app/aws_settings.py
 venv/*
 aws_policy.json
 
+env/*
+aws_policy.json
+
 *.DS_Store
 .idea/* 
 

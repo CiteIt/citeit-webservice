@@ -7,3 +7,8 @@ AMAZON_SECRET_KEY = 'alksdfj;2452lkjr;ajtsaljgfslakjfgassgf'
 AMAZON_S3_BUCKET = 'read.citeit.net'
 AMAZON_S3_ENDPOINT = 's3.amazonaws.com'
 AMAZON_REGION_NAME = 'us-east-1'
+
+TWITTER_CONSUMER_KEY = ''
+TWITTER_CONSUMER_SECRET = ''
+TWITTER_ACCESS_TOKEN = ''
+TWITTER_ACCESS_TOKEN_SECRET = ''

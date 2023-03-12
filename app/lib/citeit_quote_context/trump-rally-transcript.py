@@ -4,7 +4,7 @@
 # Command: python3 trump-rally-transcript.py
 
 # Requires installing 
-#    youtube_dl: https://pypi.org/project/youtube_dl/
+#    yt_dlp: https://pypi.org/project/yt_dlp/
 #    requests:   https://pypi.org/project/requests/
 
 import itertools
@@ -24,7 +24,7 @@ from urllib.parse import urlparse
 from urllib.parse import parse_qs
 
 import re
-import youtube_dl
+import yt_dlp
 
 
 url = 'https://youtu.be/ht20eDYmLXU'  # Trump Rally
@@ -38,7 +38,7 @@ content_file = ""
 
 
 # Download YouTube Transcript from API
-ydl = youtube_dl.YoutubeDL(
+ydl = yt_dlp.YoutubeDL(
     {'writesubtitles': True,
         'allsubtitles': True,
         'writeautomaticsub': True

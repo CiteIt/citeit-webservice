@@ -93,7 +93,7 @@ class QuoteContext:
         if (quote_start_position >= 0):
             return quote_start_position
         else:
-            return -1
+            return 0
 
     @lru_cache(maxsize=8)
     def data(self):
@@ -177,7 +177,7 @@ class QuoteContext:
 # ################## Non-class functions #######################
 
 
-def normalize_text(text):
+def normalize_text(text=''):
     """ TODO: improve typography.
         This is a quick and dirty attempt to standardize characters.
         The problem occurs when a quoted text does not use the exact same
@@ -205,4 +205,4 @@ def normalize_text(text):
             # print(html_symbol, " : " , text_value)
         except AttributeError:
             pass
-    return text
+    return text.replace('\n', '')
