@@ -97,7 +97,7 @@ websockets>=9.ck1
 Werkzeug==2.0.2
 whichcraft==0.6.1
 yarg==0.1.9
-yt-dlp==2023.02.17
+yt-dlp==2022.7.18
 zipp==3.6.0
 
 
