@@ -127,10 +127,8 @@ class YouTubeTranscript:
         """
             Get all matching transcipts
         """
-
-        yt_list = self.youtube_transcript_list()
-        transcripts = yt_list.find_transcript(['en-US','en'])
-        return transcripts
+        srt = YouTubeTranscriptApi.get_transcript( self.youtube_video_id() )
+        return srt
         
     def youtube_text(self, line_separator = ''):
         """
@@ -138,10 +136,7 @@ class YouTubeTranscript:
         """
 
         text = ''
-        transcript = self.youtube_raw()
-        t = transcript.fetch()
-
-        for line in t:
+        for line in self.youtube_raw():
             text += line['text'] + ' '
 
         return text.replace('\n', ' ')	
