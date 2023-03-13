@@ -31,6 +31,7 @@ from requests_html import HTMLSession
 
 from pathlib import Path
 
+import langdetect
 import urllib
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
@@ -47,15 +48,13 @@ import os
 import magic
 import hashlib
 
-import youtube_dl
-
 
 from bs4 import BeautifulSoup  # convert html > text
 
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
-__copyright__ = "Copyright (C) 2015-2022 Tim Langeman"
+__copyright__ = "Copyright (C) 2015-2023 Tim Langeman"
 __license__ = "MIT"
 __version__ = "0.4"
 
@@ -197,7 +196,11 @@ class Document:
 
             self.encoding = r.encoding
             self.error = error
-            self.language = detect(r.text) # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
+
+            try:
+                self.language = detect(r.text) # https://www.geeksforgeeks.org/detect-an-unknown-language-using-python/
+            except langdetect.lang_detect_exception.LangDetectException:
+                self.language = 'en'  # default language
 
 
             if 'Content-Type' in r.headers.keys():

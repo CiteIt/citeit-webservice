@@ -46,17 +46,18 @@
 ### Docker Setup:
 
   * docker build -t citeit_webservice:latest .
+  
+  docker build -t citeit_webservice:v0.50 .
+  
+  
 
   * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
+  
 
+#### Docker Detached:  -d
 
-# Optional Tools:
-
-If you don't already have your own tool preferences, here's a few ideas
 to get you started:
-
-Github's free Atom Editor
-https://atom.io/
-
-Desktop Git Client
-https://desktop.github.com/
+  * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password -d citeit/citeit_webservice:latest
+  
+  * (Amazon keys are stored in Password Manager)
+  
