@@ -1,3 +1,6 @@
+#Python 3.7.2
+#!/usr/bin/env python
+
 # Copyright (C) 2015-2020 Tim Langeman and contributors
 # <see AUTHORS.txt file>
 #
@@ -42,19 +45,14 @@ WEBSERVICE_VERSION = "0.4"
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
 __copyright__ = "Copyright (C) 2015-2020 Tim Langeman"
-__license__ = "MIT"
-__version__ = WEBSERVICE_VERSION
+__version__ = 0.4
 
 ADMINS = ['citeit@openpolitics.com']
 
 
 app = Flask(__name__)
-#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-#app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
-#engine = create_engine(SA_URL(**settings.DB_URL))
-#Base = declarative_base()
 
 logging.basicConfig(filename='error.log',level=logging.DEBUG)
 
