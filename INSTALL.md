@@ -46,17 +46,17 @@
 ### Docker Setup:
 
   * docker build -t citeit_webservice:latest .
+  * docker build -t citeit_webservice:v0.4.15 .
   
   
   
 ### Docker Build & Run:
 
-  * docker build -t citeit_webservice:v0.4.14 .  
-  * docker tag bdf65cd244d0b10fbd3bfef3eefcabb0d03cbf6e04101c7cf0004c27f78cac61 citeit/citeit_webservice:v0.4.14  
+  * docker build -t citeit_webservice:v0.4.15 .  
+  * docker tag 6e0a24bfae542c40387f0faa1b645c2d4190530714e681650b1f8094e388e4da citeit/citeit_webservice:v0.4.14
   
 
-  * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password citeit/citeit_webservice:latest
-
+  * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password -d citeit/citeit_webservice:v0.4.14
 
 
 ### Docker Push:
@@ -65,8 +65,14 @@
   * docker push citeit/citeit_webservice:latest
 
 
+### Docker Pull
+  * docker pull citeit/citeit_webservice:v0.4.14
+
+
+
 #### Docker Detached:  -d
 
+  * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password -d citeit/citeit_webservice:v0.4.14
   * docker run -p 80:80 -e AMAZON_ACCESS_KEY=password -e AMAZON_SECRET_KEY=password -d citeit/citeit_webservice:latest
   
   * (Amazon keys are stored in Password Manager)

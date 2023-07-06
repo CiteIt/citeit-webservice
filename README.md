@@ -35,8 +35,11 @@ Web Submission: description
     * [boto3](https://github.com/boto/boto3)
     * Python [Requests](http://docs.python-requests.org/en/master/): HTTP for humans
     * [ftfy](http://ftfy.readthedocs.io/en/latest/): convert bad unicode to good unicode
-              
-
+    * [Poppler](https://poppler.freedesktop.org/): Convert PDF->text 
+       - Installation: 
+          [Debian](sudo apt-get install poppler-utils) 
+          [MacPorts](https://www.macports.org/install.php)
+          (more install)(https://github.com/Belval/pdf2image)
 
 ## How CiteIt Works:
 
