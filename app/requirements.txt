@@ -40,7 +40,7 @@ jinja2-time==0.2.0
 jmespath==1.0.1
 jsonschema==4.17.3
 langdetect==1.0.9
-lxml==4.9.2
+lxml==4.9.1
 MarkupSafe==2.1.2
 more-itertools==9.1.0
 mutagen==1.46.0
