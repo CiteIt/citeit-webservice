@@ -35,7 +35,7 @@ idna==2.5
 importlib-metadata==4.8.3
 importlib-resources==5.4.0
 itsdangerous==2.0.1
-Jinja2==3.0.3
+Jinja2==2.11.3
 jinja2-time==0.2.0
 jmespath==0.10.0
 jsonschema==3.2.0
