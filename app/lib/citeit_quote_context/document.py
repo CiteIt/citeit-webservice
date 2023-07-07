@@ -58,11 +58,7 @@ __copyright__ = "Copyright (C) 2015-2023 Tim Langeman"
 __license__ = "MIT"
 __version__ = "0.4"
 
-HEADERS = {
-   'user-agent': 'Mozilla / 5.0(Windows NT 6.1;'
-   ' WOW64; rv: 54.0) Gecko/20100101 Firefox/71.0'
-}
-
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'}
 
 
 class Document:

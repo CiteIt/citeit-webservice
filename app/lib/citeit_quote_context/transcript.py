@@ -20,6 +20,7 @@ import itertools
 import operator
 import re
 import os
+import ftfy
 
 from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
@@ -127,7 +128,10 @@ class YouTubeTranscript:
         """
             Get all matching transcipts
         """
-        srt = YouTubeTranscriptApi.get_transcript( self.youtube_video_id() )
+        languages = ['en', 'en-US']
+        transcript_list = YouTubeTranscriptApi.list_transcripts(self.youtube_video_id())
+        transcript = transcript_list.find_transcript(languages)
+        srt = transcript.fetch()
         return srt
         
     def youtube_text(self, line_separator = ''):
@@ -139,6 +143,9 @@ class YouTubeTranscript:
         for line in self.youtube_raw():
             text += line['text'] + ' '
 
+        text = ftfy.fix_text(text)          # Fix unicode
+        text = text.replace('â€“', '')
+        text = text.replace('â€“', '')
         return text.replace('\n', ' ')	
 
 class OyezTranscript:
