@@ -21,6 +21,7 @@ import operator
 import re
 import os
 import ftfy
+import html
 
 from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
@@ -129,9 +130,12 @@ class YouTubeTranscript:
             Get all matching transcipts
         """
         languages = ['en', 'en-US']
-        transcript_list = YouTubeTranscriptApi.list_transcripts(self.youtube_video_id())
-        transcript = transcript_list.find_transcript(languages)
-        srt = transcript.fetch()
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(self.youtube_video_id())
+            transcript = transcript_list.find_transcript(languages)
+            srt = transcript.fetch()
+        except:
+            srt = []
         return srt
         
     def youtube_text(self, line_separator = ''):
@@ -146,7 +150,9 @@ class YouTubeTranscript:
         text = ftfy.fix_text(text)          # Fix unicode
         text = text.replace('â€“', '')
         text = text.replace('â€“', '')
-        return text.replace('\n', ' ')	
+        text = text.replace('\n', ' ')	
+        
+        return html.unescape(text)
 
 class OyezTranscript:
     """
@@ -286,5 +292,5 @@ class TwitterTranscript:
     def transcript(self, line_separator='\n\n', cache=True):
 
         t = self.api.get_status(self.id(), tweet_mode="extended")
-        return t.full_text
+        return html.unescape(t.full_text)
 

@@ -5,6 +5,7 @@ import boto3
 import settings
 import gzip
 import os
+import re
 
 from langdetect import detect
 
@@ -54,6 +55,51 @@ def fix_encoding(str):
 
     output = ftfy.fix_text(str)
     return output
+
+def convert_quotes_to_straight(str):
+    """ TODO: I'm cutting corners on typography until I figure out how to
+        standardize curly and straight quotes better.
+
+        The problem I'm trying to solve is that a quote may use a different
+        style of quote or apostrophe symbol than its source,
+        but I still want the quotes match it, so I'm converting
+        all quotes and apostrophes to the straight style.
+    """
+    if str:  # check to see if str isn't empty
+        str = str.replace("”", '"')
+        str = str.replace("“", '"')
+        str = str.replace("’", "'")
+
+        str = str.replace('&#39;', "'")
+        str = str.replace('&apos;', "'")
+        str = str.replace(u'\xa0', u' ')
+        str = str.replace('&\rsquo;', "'")
+        str = str.replace('&lsquo;', "'")
+
+        str = str.replace('&rsquo;', '"')
+        str = str.replace('&lsquo;', '"')
+        str = str.replace("\201C", '"')
+        str = str.replace(u"\u201c", "")
+        str = str.replace(u"\u201d", "")
+    return str
+
+def normalize_whitespace(str):
+    """
+        Convert multiple spaces and space characters to a single space.
+        Trim space at the beginning and end of the string
+    """
+    if str:  # check to see if str isn't empty
+        str = str.replace("&nbsp;", " ")
+        str = str.replace(u'\xa0', u' ')
+        str = str.strip()               # trim whitespace at beginning and end
+        str = re.sub(r'\s+', ' ', str)  # convert multiple spaces into single space
+    return str
+
+
+def format_filename(filename):
+    folder_separator = "%2"
+    return filename.replace("/", folder_separator)
+
 
 def publish_file(url, text, local_path, remote_path, content_type, compression=''):
 

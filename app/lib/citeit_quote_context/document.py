@@ -20,6 +20,11 @@ from lib.citeit_quote_context.misc.utils import fix_encoding
 from lib.citeit_quote_context.misc.utils import get_from_cache
 from lib.citeit_quote_context.misc.utils import save_file_to_cloud
 
+from lib.citeit_quote_context.misc.utils import convert_quotes_to_straight
+from lib.citeit_quote_context.misc.utils import normalize_whitespace
+from lib.citeit_quote_context.misc.utils import format_filename
+
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -810,50 +815,3 @@ class Document:
             If it is not, the class will requery the url multiple times
         """
         return self.num_downloads
-
-
-# ################## Non-class functions #######################
-
-def convert_quotes_to_straight(str):
-    """ TODO: I'm cutting corners on typography until I figure out how to
-        standardize curly and straight quotes better.
-
-        The problem I'm trying to solve is that a quote may use a different
-        style of quote or apostrophe symbol than its source,
-        but I still want the quotes match it, so I'm converting
-        all quotes and apostrophes to the straight style.
-    """
-    if str:  # check to see if str isn't empty
-        str = str.replace("”", '"')
-        str = str.replace("“", '"')
-        str = str.replace("’", "'")
-
-        str = str.replace('&#39;', "'")
-        str = str.replace('&apos;', "'")
-        str = str.replace(u'\xa0', u' ')
-        str = str.replace('&\rsquo;', "'")
-        str = str.replace('&lsquo;', "'")
-
-        str = str.replace('&rsquo;', '"')
-        str = str.replace('&lsquo;', '"')
-        str = str.replace("\201C", '"')
-        str = str.replace(u"\u201c", "")
-        str = str.replace(u"\u201d", "")
-    return str
-
-def normalize_whitespace(str):
-    """
-        Convert multiple spaces and space characters to a single space.
-        Trim space at the beginning and end of the string
-    """
-    if str:  # check to see if str isn't empty
-        str = str.replace("&nbsp;", " ")
-        str = str.replace(u'\xa0', u' ')
-        str = str.strip()               # trim whitespace at beginning and end
-        str = re.sub(r'\s+', ' ', str)  # convert multiple spaces into single space
-    return str
-
-
-def format_filename(filename):
-    folder_separator = "%2"
-    return filename.replace("/", folder_separator)

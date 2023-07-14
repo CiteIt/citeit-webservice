@@ -10,6 +10,7 @@
 
 from lib.google_diff_match_patch.diff_match_patch import diff_match_patch
 from functools import lru_cache
+import html
 
 __author__ = 'Tim Langeman'
 __email__ = "timlangeman@gmail.com"
@@ -86,8 +87,8 @@ class QuoteContext:
             estimated_starting_location = self.estimated_starting_location()
 
         quote_start_position = quote_locate.match_bitap(
-            self.text.lower(),
-            self.quote.lower(),
+            html.unescape(self.text.lower()),
+            html.unescape(self.quote.lower()),
             estimated_starting_location
         )
         if (quote_start_position >= 0):
@@ -142,31 +143,32 @@ class QuoteContext:
             # Context After ends (500) characters after quote end
             context_end_position = quote_end_position + \
                 self.after_quote_context_length
-            # Unless file ends first
-            if (context_end_position > self.text_length()):
-                context_end_position = self.text_length()
+
+            # There isn't enough text to display 500 characters of context
+            if (context_end_position >= self.text_length()):
+                context_end_position = self.text_length()   # Get how much context is available to show
+            
+            # Calculate 500 characters of context
             else:
                 context_end_position = context_end_position + \
                     self.after_quote_context_length
 
-                # Get text that immediately precedes and follows
-                text = self.text
-                context_before = text[
-                    context_start_position: quote_start_position
-                ]
-                context_quote = text[quote_start_position: quote_end_position]
-                context_after = text[quote_end_position: context_end_position]
+            # Context: text that immediately precedes and follows
+            text = self.text
+            context_before = text[ context_start_position: quote_start_position ]
+            context_quote = text[quote_start_position: quote_end_position]
+            context_after = text[quote_end_position: context_end_position]
 
-                # Save data to data dictionary
-                data['context_start_position'] = context_start_position
-                data['end_position'] = quote_end_position
-                data['context_end_position'] = context_end_position
-                data['context_before'] = context_before
-                data['quote'] = context_quote
-                data['context_after'] = context_after
+            # Save data to data dictionary
+            data['context_start_position'] = context_start_position
+            data['end_position'] = quote_end_position
+            data['context_end_position'] = context_end_position
+            data['context_before'] = context_before
+            data['quote'] = context_quote
+            data['context_after'] = context_after
 
-                if self.text_output:
-                    data['text'] = text
+            if self.text_output:
+                data['text'] = text
 
         return data
 
@@ -205,4 +207,11 @@ def normalize_text(text=''):
             # print(html_symbol, " : " , text_value)
         except AttributeError:
             pass
-    return text.replace('\n', '')
+
+    text = text.replace('\n', '')
+    text = html.unescape(text)
+
+    return text
+    
+
+    
