@@ -105,5 +105,5 @@ whichcraft==0.6.1
 yarg==0.1.9
 youtube-dl==2021.12.17
 youtube-transcript-api==0.5.0
-yt-dlp==2023.3.4
+yt-dlp==2023.9.24
 zipp==3.15.0
